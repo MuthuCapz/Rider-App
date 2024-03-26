@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Driver</string>
+    <string name="estimated_time">Estimated Time</string>
+    <string name="delivery_message">Order Delivered</string>
+    <string name="comfirmed_message">Order Comfirmed</string>
+    <string name="accept_message">Order Picked</string>
+</resources>

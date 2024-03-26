@@ -1,0 +1,139 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:padding="16dp">
+    <androidx.cardview.widget.CardView
+        android:id="@+id/order"
+        android:layout_width="match_parent"
+        android:layout_height="355dp"
+        app:cardCornerRadius="30dp"
+        android:backgroundTint="@color/greenlight"
+        android:elevation="10dp"
+        >
+
+        <TextView
+            android:layout_width="140dp"
+            android:layout_height="20dp"
+            android:layout_marginTop="20dp"
+            android:textColor="@color/green"
+            android:layout_marginStart="100dp"
+            android:paddingLeft="10dp"
+            android:text="@string/estimated_time"/>
+
+        <ImageView
+            android:id="@+id/drop"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:layout_marginTop="18dp"
+            android:layout_marginStart="210dp"
+            android:layout_marginEnd="10dp"
+            android:onClick="showPopupMenu"
+            android:src="@drawable/baseline_arrow_drop_down_24" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="50dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="10dp">
+            <TextView
+                android:id="@+id/itemPushKey"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Order id: " />
+
+            <TextView
+                android:id="@+id/userUid"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="User Id: " />
+
+
+            <TextView
+                android:id="@+id/userName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="userName: " />
+
+            <TextView
+                android:id="@+id/address"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="address:" />
+
+            <TextView
+                android:id="@+id/phone"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="phone:" />
+
+            <TextView
+                android:id="@+id/cancel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:layout_marginStart="100dp"
+                android:textColor="@color/red"
+                android:textSize="18dp"
+                />
+
+
+        </LinearLayout>
+        <TextView
+            android:id="@+id/delivery_message"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="80dp"
+            android:layout_marginEnd="80dp"
+            android:text=""
+            android:layout_marginTop="250dp"
+            android:textColor="@color/red"
+            android:textSize="18dp"/>
+
+
+        <TextView
+            android:id="@+id/cancelMessage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="150dp"
+            android:layout_marginEnd="150dp"
+            android:text=""
+            android:layout_marginTop="250dp"
+            android:textColor="@color/green"
+            android:textSize="18dp" />
+        <Button
+            android:id="@+id/conform"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Confirmed"
+            android:backgroundTint="@color/green"
+            android:layout_marginTop="290dp"
+            android:layout_marginStart="14dp"/>
+        <Button
+            android:id="@+id/accept"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Accept"
+            android:backgroundTint="@color/green"
+            android:layout_marginTop="290dp"
+            android:layout_marginStart="135dp"/>
+        <Button
+            android:id="@+id/delivered"
+            android:layout_width="110dp"
+            android:layout_height="wrap_content"
+            android:text="delivered"
+            android:backgroundTint="@color/green"
+            android:layout_marginTop="290dp"
+            android:layout_marginEnd="13dp"
+            android:layout_marginStart="233dp"/>
+    </androidx.cardview.widget.CardView>
+
+</LinearLayout>
