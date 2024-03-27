@@ -1,20 +1,38 @@
-Driver App in Android Kotlin
-This is the README file for the Fish Delivery Driver App project developed in Android Studio using Kotlin.
+# Delivery Android App
 
-Description
-The Fish Delivery Driver App is a specialized solution designed to facilitate the delivery of fresh fish and seafood to customers. It provides an intuitive interface and essential features tailored to meet the unique requirements of fish delivery drivers and seafood providers.
+## Overview:
+This project is an Android application developed in Kotlin that serves as a delivery tracker for users. It utilizes Firebase Realtime Database for storing delivery information, Google Maps integration for location visualization, and Firebase for storing drive location data. The app provides estimated time for delivery and displays order status to keep users informed about their deliveries.
 
-Features
-User Authentication: Secure login system for drivers with options for email/password or social media authentication.
-Delivery Management: Ability to view, accept, and manage delivery orders from customers.
-Real-Time Tracking: Integration with redirect to googlemap to provide real-time tracking of the driver's location and ETA to customers.
-Route Optimization: Redirect to googlemap automatically picked to customer location and efficient route planning to deliver orders on time.
-Delivery Status Updates: Automatic updates to customers regarding the status of their delivery, such as order received, order packed, out for delivery, etc.
-Customer Communication: In-app messaging or notification system for drivers to communicate with customers regarding delivery details or any issues.
-Order History: Access to past delivery orders for reference and tracking purposes.
+## Features:
+- Firebase Realtime Database: Stores delivery information in real-time.
+- Google Maps: Redirect to google map automatically picked user location.
+- Firebase Drive Location Store: Stores drive locations for tracking deliveries.
+- Estimated Time for Delivery: Provides users with an estimated time for their delivery.
+- Order Status: Displays the current status of the order to keep users informed.
+
+## Technologies Used:
+- Android Studio
+- Kotlin
+- Firebase Realtime Database
+- Google Maps 
+- ViewBinding
+
+## Installation:
+1. Open the project in Android Studio.
+2. Connect Firebase to your project and set up Realtime Database.
+3. Enable Google Maps and configure the necessary settings.
+4. Configure Firebase Authentication if required.
+5. Build and run the application on an Android device or emulator.
+
+## Usage:
+1. Launch the application on your Android device.
+2. View the list of orders.
+3. Tap on an order to see its details, including delivery status and estimated time.
+4. Track the order using Google Maps integration.
+5. Receive updates on the order status.
+6. Once the order is delivered, mark it as completed.
+
  
-To run this project, follow these steps:
-Clone this repository ---> https://github.com/MuthuCapz/Driver_Android_App.git
-Open the project in Android Studio using Kotlin language.
-Connect a device or use an emulator.
-Build and run the app.
+ 
+ 
+ 
