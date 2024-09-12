@@ -1,4 +1,4 @@
-package com.example.driver
+package com.capztone.driver
 
 import org.junit.Test
 

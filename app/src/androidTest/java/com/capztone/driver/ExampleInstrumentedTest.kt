@@ -1,4 +1,4 @@
-package com.example.driver
+package com.capztone.driver
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4

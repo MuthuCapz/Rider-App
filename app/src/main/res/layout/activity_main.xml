@@ -2,24 +2,55 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    android:background="@color/white"
+    tools:context="com.capztone.driver.MainActivity">
 
 
-     <TextView
+    <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text= "Customer Orders"
-        android:textSize="25dp"
+        android:textSize="23sp"
         android:fontFamily="@font/inika_regular"
         android:textColor="@color/black"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="17dp"
         android:layout_marginStart="95dp"/>
+
+    <TextView
+        android:id="@+id/username"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text= "Username"
+        android:textSize="16sp"
+        android:fontFamily="@font/inika_regular"
+        android:textColor="@color/black"
+        android:layout_marginTop="65dp"
+        android:layout_marginStart="70dp"/>
+
+    <TextView
+        android:id="@+id/emailtext"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text= "Email"
+        android:textSize="16sp"
+        android:fontFamily="@font/inika_regular"
+        android:textColor="@color/black"
+        android:layout_marginTop="100dp"
+        android:layout_marginStart="70dp"/>
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/orderRecyclerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="65dp"
+        android:layout_marginTop="130dp"
+        android:padding="2dp"
         android:scrollbars="vertical"
         tools:listitem="@layout/list_item_order"/>
+    <ImageView
+        android:id="@+id/logout"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_marginStart="320dp"
+        android:layout_marginTop="18dp"
+        android:src="@drawable/baseline_logout_24"/>
 </RelativeLayout>

@@ -8,4 +8,8 @@
     <color name="bg">#C8DADBDD</color>
     <color name="ash">#8FB5B6B8</color>
     <color name="red">#F1151C</color>
+    <color name="navy"> #316FF6</color>
+    <color name="Lnavy">#2B80E8</color>
+    <color name="Lblack">#1E1F20</color>
+    <color name="Lblue">#D1E1F3</color>
 </resources>

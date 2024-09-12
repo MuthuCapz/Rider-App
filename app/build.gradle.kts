@@ -5,15 +5,15 @@ plugins {
 }
 
 android {
-    namespace = "com.example.driver"
+    namespace = "com.capztone.driver"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.driver"
+        applicationId = "com.capztone.driver"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 11
+        versionName = "1.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -36,6 +36,7 @@ android {
     }
     buildFeatures{
         viewBinding = true
+        dataBinding = true
     }
 }
 
@@ -53,11 +54,23 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
     implementation("androidx.fragment:fragment-ktx:1.6.2")
     implementation("androidx.activity:activity-ktx:1.8.2")
+    implementation("com.google.firebase:firebase-auth:22.3.1")
+    implementation("com.google.android.gms:play-services-auth:21.0.0")
+    implementation("com.google.firebase:firebase-storage-ktx:20.3.0")
+    implementation("androidx.activity:activity:1.8.0")
+    implementation("androidx.cardview:cardview:1.0.0")
     testImplementation("junit:junit:4.13.2")
-    
-
+    implementation ("de.hdodenhof:circleimageview:3.1.0")
+    implementation("com.airbnb.android:lottie:6.0.1")
     implementation ("ai.nextbillion:nb-navigation-android:0.2.0")
     implementation ("ai.nextbillion:nb-maps-android:0.1.0")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+
+
+        implementation("com.google.android.gms:play-services-auth:21.2.0")
+        implementation ("com.github.bumptech.glide:glide:4.12.0")
+        annotationProcessor("com.github.bumptech.glide:compiler:4.12.0")
+
+
 }

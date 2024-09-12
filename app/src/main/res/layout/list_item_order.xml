@@ -1,139 +1,295 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:orientation="vertical"
-    android:padding="16dp">
-    <androidx.cardview.widget.CardView
-        android:id="@+id/order"
+    android:id="@+id/order"
+    android:layout_margin="16dp"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="4dp">
+
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+
         android:layout_width="match_parent"
-        android:layout_height="355dp"
-        app:cardCornerRadius="30dp"
-        android:backgroundTint="@color/greenlight"
-        android:elevation="10dp"
-        >
-
-        <TextView
-            android:layout_width="140dp"
-            android:layout_height="20dp"
-            android:layout_marginTop="20dp"
-            android:textColor="@color/green"
-            android:layout_marginStart="100dp"
-            android:paddingLeft="10dp"
-            android:text="@string/estimated_time"/>
-
-        <ImageView
-            android:id="@+id/drop"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:clickable="true"
-            android:layout_marginTop="18dp"
-            android:layout_marginStart="210dp"
-            android:layout_marginEnd="10dp"
-            android:onClick="showPopupMenu"
-            android:src="@drawable/baseline_arrow_drop_down_24" />
+        android:layout_height="wrap_content"
+        android:elevation="4dp"
+        android:layout_margin="16dp"
+        android:background="@color/teal_200">
 
         <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+
+            android:paddingBottom="8dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:textColor="@color/black"
+                android:text="Estimated Time:" />
+
+            <ImageView
+                android:id="@+id/drop"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:clickable="true"
+                android:onClick="showPopupMenu"
+                android:src="@drawable/baseline_arrow_drop_down_24" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/textView7"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:layout_marginTop="50dp"
-            android:layout_marginStart="20dp"
-            android:layout_marginEnd="10dp">
-            <TextView
-                android:id="@+id/itemPushKey"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Order id: " />
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="40dp"
+            android:text="Order ID:"
+            android:textColor="@color/black"
+            android:textSize="18sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-            <TextView
-                android:id="@+id/userUid"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:text="User Id: " />
+        <TextView
+            android:id="@+id/itemPushKey"
+            android:layout_width="150dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="40dp"
+            android:layout_marginEnd="16dp"
+            android:paddingEnd="0dp"
+            android:text=""
+            android:textColor="@color/black"
+            android:textSize="18sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/textView11"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="User ID:"
+            android:textColor="@color/black"
+            android:textSize="18sp"
+            app:layout_constraintStart_toStartOf="@+id/textView7"
+            app:layout_constraintTop_toBottomOf="@+id/itemPushKey" />
+
+        <TextView
+            android:id="@+id/userUid"
+            android:layout_width="150dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text=""
+            android:textColor="@color/black"
+            android:textSize="18sp"
+            app:layout_constraintEnd_toEndOf="@+id/itemPushKey"
+            app:layout_constraintTop_toBottomOf="@+id/itemPushKey" />
+
+        <TextView
+            android:id="@+id/textView14"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Customer Name:"
+            android:textColor="@color/black"
+            android:textSize="18sp"
+            app:layout_constraintStart_toStartOf="@+id/textView11"
+            app:layout_constraintTop_toBottomOf="@+id/userUid" />
+
+        <TextView
+            android:id="@+id/userName"
+            android:layout_width="150dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text=""
+            android:textColor="@color/black"
+            android:textSize="18sp"
+            app:layout_constraintEnd_toEndOf="@+id/userUid"
+            app:layout_constraintTop_toBottomOf="@+id/userUid" />
 
 
-            <TextView
-                android:id="@+id/userName"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:text="userName: " />
-
-            <TextView
-                android:id="@+id/address"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:text="address:" />
-
-            <TextView
-                android:id="@+id/phone"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:text="phone:" />
-
-            <TextView
-                android:id="@+id/cancel"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:layout_marginStart="100dp"
-                android:textColor="@color/red"
-                android:textSize="18dp"
-                />
+        <TextView
+            android:id="@+id/textView17"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Customer Address:"
+            android:textColor="@color/black"
+            android:textSize="18sp"
+            app:layout_constraintStart_toStartOf="@+id/textView14"
+            app:layout_constraintTop_toBottomOf="@+id/userName" />
+        <TextView
+            android:id="@+id/address"
+            android:layout_width="150dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text=""
+            android:textColor="@color/black"
+            android:textSize="18sp"
+            app:layout_constraintEnd_toEndOf="@+id/userName"
+            app:layout_constraintTop_toBottomOf="@+id/userName" />
 
 
-        </LinearLayout>
+        <TextView
+            android:id="@+id/textView18"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Customer Phone:"
+            android:textColor="@color/black"
+            android:textSize="18sp"
+            app:layout_constraintStart_toStartOf="@+id/textView17"
+            app:layout_constraintTop_toBottomOf="@+id/address" />
+        <TextView
+            android:id="@+id/phone"
+            android:layout_width="150dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text=""
+            android:textColor="@color/black"
+            android:textSize="18sp"
+            app:layout_constraintEnd_toEndOf="@+id/address"
+            app:layout_constraintTop_toBottomOf="@+id/address" />
+
+        <TextView
+            android:id="@+id/textView19"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Shop Name:"
+            android:textColor="@color/black"
+            android:textSize="18sp"
+            app:layout_constraintStart_toStartOf="@+id/textView18"
+            app:layout_constraintTop_toBottomOf="@+id/phone" />
+        <TextView
+            android:id="@+id/shopname"
+            android:layout_width="150dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text=""
+            android:textColor="@color/black"
+            android:textSize="18sp"
+            app:layout_constraintEnd_toEndOf="@+id/phone"
+            app:layout_constraintTop_toBottomOf="@+id/phone" />
+        <TextView
+            android:id="@+id/textView20"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Food Name:"
+            android:textColor="@color/black"
+            android:textSize="18sp"
+            app:layout_constraintStart_toStartOf="@+id/textView19"
+            app:layout_constraintTop_toBottomOf="@+id/shopname" />
+        <TextView
+            android:id="@+id/foodname"
+            android:layout_width="150dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text=""
+            android:textColor="@color/black"
+            android:textSize="18sp"
+            app:layout_constraintEnd_toEndOf="@+id/shopname"
+            app:layout_constraintTop_toBottomOf="@+id/shopname" />
+
+        <TextView
+            android:id="@+id/textView21"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Food Quantity:"
+            android:textColor="@color/black"
+            android:textSize="18sp"
+            app:layout_constraintStart_toStartOf="@+id/textView20"
+            app:layout_constraintTop_toBottomOf="@+id/foodname" />
+        <TextView
+            android:id="@+id/foodquantity"
+            android:layout_width="150dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text=""
+            android:textColor="@color/black"
+            android:textSize="18sp"
+            app:layout_constraintEnd_toEndOf="@+id/foodname"
+            app:layout_constraintTop_toBottomOf="@+id/foodname" />
+
+
+
+        <TextView
+            android:id="@+id/cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:layout_gravity="center"
+            android:textColor="@color/red"
+            android:textSize="16sp"
+            android:text=" "
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textView21"/>
+
         <TextView
             android:id="@+id/delivery_message"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="80dp"
-            android:layout_marginEnd="80dp"
+            android:layout_gravity="center"
             android:text=""
-            android:layout_marginTop="250dp"
+            android:layout_marginTop="18dp"
             android:textColor="@color/red"
-            android:textSize="18dp"/>
+            android:textSize="16sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/textView21"/>
 
 
-        <TextView
-            android:id="@+id/cancelMessage"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="150dp"
-            android:layout_marginEnd="150dp"
-            android:text=""
-            android:layout_marginTop="250dp"
-            android:textColor="@color/green"
-            android:textSize="18dp" />
+            android:orientation="horizontal"
+
+android:layout_marginStart="8dp"
+            android:layout_marginTop="380dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
         <Button
             android:id="@+id/conform"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Confirmed"
             android:backgroundTint="@color/green"
-            android:layout_marginTop="290dp"
-            android:layout_marginStart="14dp"/>
+            android:text="Confirmed"
+            android:textColor="@color/white"
+            android:textSize="15sp" />
+
         <Button
             android:id="@+id/accept"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Accept"
+            android:layout_marginStart="8dp"
             android:backgroundTint="@color/green"
-            android:layout_marginTop="290dp"
-            android:layout_marginStart="135dp"/>
-        <Button
-            android:id="@+id/delivered"
-            android:layout_width="110dp"
-            android:layout_height="wrap_content"
-            android:text="delivered"
-            android:backgroundTint="@color/green"
-            android:layout_marginTop="290dp"
-            android:layout_marginEnd="13dp"
-            android:layout_marginStart="233dp"/>
-    </androidx.cardview.widget.CardView>
+            android:textColor="@color/white"
+            android:textSize="15sp"
+            android:text="Accept" />
 
-</LinearLayout>
+            <Button
+                android:id="@+id/delivered"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:textColor="@color/white"
+                android:maxLines="1"
+                android:textSize="15sp"
+                android:backgroundTint="@color/green"
+                android:text="Delivered" />
+        </LinearLayout>
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.cardview.widget.CardView>

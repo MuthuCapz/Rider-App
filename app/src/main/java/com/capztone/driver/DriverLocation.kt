@@ -1,4 +1,4 @@
-package com.example.driver
+package com.capztone.driver
 
 import android.Manifest
 import android.content.Intent
@@ -7,7 +7,6 @@ import android.location.Location
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.viewModels
-import androidx.lifecycle.ViewModelProvider
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.google.android.gms.location.FusedLocationProviderClient
