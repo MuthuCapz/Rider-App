@@ -59,12 +59,13 @@ class     OrderAdapter(private val context: Context, private val username: Strin
 
         private var orderIdTextView: TextView = itemView.findViewById(R.id.itemPushKey)
         private var userUidTextView: TextView = itemView.findViewById(R.id.userUid)
-        private var customerNameTextView: TextView = itemView.findViewById(R.id.userName)
+
         private var addressTextView: TextView = itemView.findViewById(R.id.address)
-        private var phoneTextView: TextView = itemView.findViewById(R.id.phone)
+        private var selectedSlotTextView: TextView = itemView.findViewById(R.id.slot)
         private var shopnameTextView: TextView = itemView.findViewById(R.id.shopname)
         private var foodnameTextView: TextView = itemView.findViewById(R.id.foodname)
         private var foodquantityTextView: TextView = itemView.findViewById(R.id.foodquantity)
+        private var orderdateTextView: TextView = itemView.findViewById(R.id.date)
         private var cancellationMessageTextView: TextView = itemView.findViewById(R.id.cancel)
         private var btnViewDetails: Button = itemView.findViewById(R.id.accept)
         private var btnConfirmed: Button = itemView.findViewById(R.id.conform)
@@ -77,12 +78,13 @@ class     OrderAdapter(private val context: Context, private val username: Strin
         fun bind(order: Order) {
             orderIdTextView.text = "${order.itemPushKey}"
             userUidTextView.text = "${order.userUid}"
-            customerNameTextView.text = "${order.userName}"
+
             addressTextView.text = "${order.address}"
-            phoneTextView.text = "${order.phone}"
+            selectedSlotTextView.text = "${order.selectedSlot}"
             shopnameTextView.text = "${order.shopNames}"
             foodnameTextView.text = "${order.foodNames}"
             foodquantityTextView.text = "${order.foodQuantities}"
+            orderdateTextView.text = "${order.orderDate}"
 
             val statusReference = firebaseDatabase.child("status").child(order.itemPushKey)
             statusReference.addValueEventListener(object : ValueEventListener {
@@ -90,6 +92,13 @@ class     OrderAdapter(private val context: Context, private val username: Strin
                     val status = dataSnapshot.child("message").value?.toString() ?: ""
                     deliveryMessageTextView.visibility = View.VISIBLE
                     deliveryMessageTextView.text = status
+                    // Slot check before enabling buttons
+                    val slotTimeRange = selectedSlotTextView.text.toString()
+                    val isInSlotTime = isCurrentTimeInSlot(slotTimeRange)
+
+                    btnViewDetails.isEnabled = isInSlotTime
+                    btnConfirmed.isEnabled = isInSlotTime
+                    btnDelivered.isEnabled = isInSlotTime
 
                     when (status) {
 
@@ -136,41 +145,52 @@ class     OrderAdapter(private val context: Context, private val username: Strin
             drop.setOnClickListener { showPopupMenu(order.itemPushKey) }
 
             btnViewDetails.setOnClickListener {
-                launchGoogleMapsDirections(order.address)
-                saveMessageToFirebase(order.itemPushKey, "Order picked", order.shopNames)
-                btnConfirmed.isEnabled = false
-                btnViewDetails.isEnabled = false
-                btnViewDetails.setBackgroundColor(ContextCompat.getColor(context, R.color.greenlightt))
+                val slotTimeRange = selectedSlotTextView.text.toString()
+                if (isCurrentTimeInSlot(slotTimeRange)) {
+                    launchGoogleMapsDirections(order.address)
+                    saveMessageToFirebase(order.itemPushKey, "Order picked", order.shopNames)
+                    btnViewDetails.isEnabled = false
+                    btnConfirmed.isEnabled = false
+                } else {
+                    showSlotTimeToast()
+                }
             }
 
             btnConfirmed.setOnClickListener {
-
                 if (!estimatedTimeSet) {
-                    // Notify the user to set estimated time first
-                    Toast.makeText(context, "Please set estimated time first", Toast.LENGTH_SHORT)
-                        .show()
+                    Toast.makeText(context, "Please set estimated time first", Toast.LENGTH_SHORT).show()
                     return@setOnClickListener
                 }
-                saveMessageToFirebase(order.itemPushKey, "Order confirmed", order.shopNames)
-                btnConfirmed.isEnabled = false
-                btnConfirmed.setBackgroundColor(
-                    ContextCompat.getColor(
-                        context,
-                        R.color.greenlightt
+                val slotTimeRange = selectedSlotTextView.text.toString()
+                if (isCurrentTimeInSlot(slotTimeRange)) {
+                    saveMessageToFirebase(order.itemPushKey, "Order confirmed", order.shopNames)
+                    btnConfirmed.isEnabled = false
+                    btnConfirmed.setBackgroundColor(
+                        ContextCompat.getColor(
+                            context,
+                            R.color.greenlightt
+                        )
                     )
-                )
-
-
+                } else {
+                    showSlotTimeToast()
+                }
             }
+
 
             btnDelivered.setOnClickListener {
-                saveMessageToFirebase(order.itemPushKey, "Order delivered", order.shopNames)
-                btnConfirmed.isEnabled = false
-                btnViewDetails.isEnabled = false
-                btnDelivered.isEnabled = false
-                btnDelivered.setBackgroundColor(ContextCompat.getColor(context, R.color.greenlightt))
-            }
+                val slotTimeRange = selectedSlotTextView.text.toString()
+                if (isCurrentTimeInSlot(slotTimeRange)) {
+                    saveMessageToFirebase(order.itemPushKey, "Order delivered", order.shopNames)
+                    btnDelivered.isEnabled = false
+                    btnViewDetails.isEnabled = false
+                    btnDelivered.isEnabled = false
 
+                    btnDelivered.setBackgroundColor(ContextCompat.getColor(context, R.color.greenlightt))
+
+                } else {
+                    showSlotTimeToast()
+                }
+            }
 
             if (order.cancellationMessage.isNotBlank()) {
                 cancellationMessageTextView.visibility = View.VISIBLE
@@ -189,7 +209,31 @@ class     OrderAdapter(private val context: Context, private val username: Strin
 
         }
 
+        private fun isCurrentTimeInSlot(slotTimeRange: String): Boolean {
+            try {
+                val slotTimes = slotTimeRange.split("-")
+                val startTime = slotTimes[0].trim()
+                val endTime = slotTimes[1].trim()
 
+                val currentTime = getCurrentTime()
+
+                val startTimeParsed = SimpleDateFormat("hh:mma", Locale.getDefault()).parse(startTime)
+                val endTimeParsed = SimpleDateFormat("hh:mma", Locale.getDefault()).parse(endTime)
+
+                return currentTime.after(startTimeParsed) && currentTime.before(endTimeParsed)
+            } catch (e: Exception) {
+                Log.e("OrderAdapter", "Error parsing slot time: $slotTimeRange")
+            }
+            return false
+        }
+
+        private fun getCurrentTime(): Date {
+            return Calendar.getInstance().time
+        }
+
+        private fun showSlotTimeToast() {
+            Toast.makeText(context, "Not slot time, please click during slot time only", Toast.LENGTH_SHORT).show()
+        }
 
         private fun showPopupMenu(orderId: String) {
             val popupMenu = PopupMenu(context, drop)
@@ -287,6 +331,7 @@ class     OrderAdapter(private val context: Context, private val username: Strin
         }
 
         private fun disableButtonsCompletely() {
+
             btnViewDetails.isEnabled = false
             btnViewDetails.isClickable = false // Disable clickability
             btnConfirmed.isEnabled = false

@@ -5,11 +5,12 @@ data class Order(
     val userUid: String,
     val userName: String,
     var address: String,
-    var phone: String,
+    var selectedSlot: String,
     var cancellationMessage: String,
     val shopNames: List<String> = emptyList(),
     var foodNames: List<String> = emptyList(),
     var foodQuantities: List<Int> = emptyList(),
+    var orderDate: String,
     var isDelivered: Boolean = false,
     val latitude: Double? = null,
     val longitude: Double? = null
@@ -26,6 +27,7 @@ data class Order(
         emptyList(),
         emptyList(), // Added missing empty list for foodNames
         emptyList(), // Added missing empty list for foodQuantities
+        "",
         false,
         null,
         null

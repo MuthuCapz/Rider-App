@@ -58,13 +58,8 @@ class MainActivity : AppCompatActivity() {
             val userName = user.displayName
             val email = user.email
 
-            // Find TextViews in your layout file
-            val userNameTextView: TextView = findViewById(R.id.username)
-            val emailTextView: TextView = findViewById(R.id.emailtext)
 
-            // Display the username and email
-            userNameTextView.text = "Username: $userName"
-            emailTextView.text = "Email: $email"
+
 
             // Pass username to OrderAdapter
             orderAdapter = OrderAdapter(this, userName ?: "")
