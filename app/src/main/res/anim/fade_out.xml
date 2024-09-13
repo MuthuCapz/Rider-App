@@ -1,0 +1,7 @@
+<!-- res/anim/slide_out.xml -->
+<set xmlns:android="http://schemas.android.com/apk/res/android">
+    <translate
+        android:duration="3000"
+        android:fromXDelta="0"
+        android:toXDelta="500%" />
+</set>
