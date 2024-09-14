@@ -1,3 +1,5 @@
+
+
 package com.capztone.driver
 
 import android.content.Context
@@ -92,13 +94,6 @@ class     OrderAdapter(private val context: Context, private val username: Strin
                     val status = dataSnapshot.child("message").value?.toString() ?: ""
                     deliveryMessageTextView.visibility = View.VISIBLE
                     deliveryMessageTextView.text = status
-                    // Slot check before enabling buttons
-                    val slotTimeRange = selectedSlotTextView.text.toString()
-                    val isInSlotTime = isCurrentTimeInSlot(slotTimeRange)
-
-                    btnViewDetails.isEnabled = isInSlotTime
-                    btnConfirmed.isEnabled = isInSlotTime
-                    btnDelivered.isEnabled = isInSlotTime
 
                     when (status) {
 
@@ -144,53 +139,51 @@ class     OrderAdapter(private val context: Context, private val username: Strin
 
             drop.setOnClickListener { showPopupMenu(order.itemPushKey) }
 
-            btnViewDetails.setOnClickListener {
-                val slotTimeRange = selectedSlotTextView.text.toString()
-                if (isCurrentTimeInSlot(slotTimeRange)) {
+            val slotTimeRange = order.selectedSlot
+            val currentTime = getCurrentTime()
+
+            val isWithinSlotTime = isCurrentTimeInSlot(slotTimeRange, currentTime)
+
+            // Handle button states based on time comparison
+            if (!isWithinSlotTime) {
+                btnViewDetails.setOnClickListener {
+                    Toast.makeText(context, "Please click slot during time only", Toast.LENGTH_SHORT).show()
+                }
+                btnConfirmed.setOnClickListener {
+                    Toast.makeText(context, "Please click slot during time only", Toast.LENGTH_SHORT).show()
+                }
+                btnDelivered.setOnClickListener {
+                    Toast.makeText(context, "Please click slot during time only", Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                // Existing functionality when the current time is within the slot
+                btnViewDetails.setOnClickListener {
                     launchGoogleMapsDirections(order.address)
                     saveMessageToFirebase(order.itemPushKey, "Order picked", order.shopNames)
-                    btnViewDetails.isEnabled = false
                     btnConfirmed.isEnabled = false
-                } else {
-                    showSlotTimeToast()
+                    btnViewDetails.isEnabled = false
+                    btnViewDetails.setBackgroundColor(ContextCompat.getColor(context, R.color.greenlightt))
                 }
-            }
 
-            btnConfirmed.setOnClickListener {
-                if (!estimatedTimeSet) {
-                    Toast.makeText(context, "Please set estimated time first", Toast.LENGTH_SHORT).show()
-                    return@setOnClickListener
-                }
-                val slotTimeRange = selectedSlotTextView.text.toString()
-                if (isCurrentTimeInSlot(slotTimeRange)) {
+                btnConfirmed.setOnClickListener {
+                    if (!estimatedTimeSet) {
+                        Toast.makeText(context, "Please set estimated time first", Toast.LENGTH_SHORT).show()
+                        return@setOnClickListener
+                    }
                     saveMessageToFirebase(order.itemPushKey, "Order confirmed", order.shopNames)
                     btnConfirmed.isEnabled = false
-                    btnConfirmed.setBackgroundColor(
-                        ContextCompat.getColor(
-                            context,
-                            R.color.greenlightt
-                        )
-                    )
-                } else {
-                    showSlotTimeToast()
+                    btnConfirmed.setBackgroundColor(ContextCompat.getColor(context, R.color.greenlightt))
                 }
-            }
 
-
-            btnDelivered.setOnClickListener {
-                val slotTimeRange = selectedSlotTextView.text.toString()
-                if (isCurrentTimeInSlot(slotTimeRange)) {
+                btnDelivered.setOnClickListener {
                     saveMessageToFirebase(order.itemPushKey, "Order delivered", order.shopNames)
-                    btnDelivered.isEnabled = false
+                    btnConfirmed.isEnabled = false
                     btnViewDetails.isEnabled = false
                     btnDelivered.isEnabled = false
-
                     btnDelivered.setBackgroundColor(ContextCompat.getColor(context, R.color.greenlightt))
-
-                } else {
-                    showSlotTimeToast()
                 }
             }
+
 
             if (order.cancellationMessage.isNotBlank()) {
                 cancellationMessageTextView.visibility = View.VISIBLE
@@ -208,32 +201,36 @@ class     OrderAdapter(private val context: Context, private val username: Strin
             }
 
         }
+        // Function to get the current time in 24-hour format (e.g., "09:50")
+        private fun getCurrentTime(): String {
+            val sdf = SimpleDateFormat("hh:mm a", Locale.getDefault())
+            return sdf.format(Date())
+        }
 
-        private fun isCurrentTimeInSlot(slotTimeRange: String): Boolean {
-            try {
-                val slotTimes = slotTimeRange.split("-")
-                val startTime = slotTimes[0].trim()
-                val endTime = slotTimes[1].trim()
+        // Function to check if the current time is within the given slot time range
+        private fun isCurrentTimeInSlot(slotTimeRange: String, currentTime: String): Boolean {
+            // Extract start and end times from the slotTimeRange (e.g., "10:00 am - 12:00 pm")
+            val timeParts = slotTimeRange.split("-")
+            if (timeParts.size != 2) return false // Invalid slot format
 
-                val currentTime = getCurrentTime()
+            val startTime = timeParts[0].trim() // e.g., "10:00 am"
+            val endTime = timeParts[1].trim() // e.g., "12:00 pm"
 
-                val startTimeParsed = SimpleDateFormat("hh:mma", Locale.getDefault()).parse(startTime)
-                val endTimeParsed = SimpleDateFormat("hh:mma", Locale.getDefault()).parse(endTime)
+            val sdf = SimpleDateFormat("hh:mm a", Locale.getDefault())
 
-                return currentTime.after(startTimeParsed) && currentTime.before(endTimeParsed)
+            return try {
+                val currentTimeDate = sdf.parse(currentTime)
+                val startTimeDate = sdf.parse(startTime)
+                val endTimeDate = sdf.parse(endTime)
+
+                currentTimeDate != null && startTimeDate != null && endTimeDate != null &&
+                        currentTimeDate.after(startTimeDate) && currentTimeDate.before(endTimeDate)
             } catch (e: Exception) {
-                Log.e("OrderAdapter", "Error parsing slot time: $slotTimeRange")
+                false
             }
-            return false
         }
 
-        private fun getCurrentTime(): Date {
-            return Calendar.getInstance().time
-        }
 
-        private fun showSlotTimeToast() {
-            Toast.makeText(context, "Not slot time, please click during slot time only", Toast.LENGTH_SHORT).show()
-        }
 
         private fun showPopupMenu(orderId: String) {
             val popupMenu = PopupMenu(context, drop)
@@ -340,4 +337,4 @@ class     OrderAdapter(private val context: Context, private val username: Strin
             btnDelivered.isClickable = false // Disable clickability
         }
     }
-}
+} 
