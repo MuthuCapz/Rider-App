@@ -1,5 +1,3 @@
-
-
 package com.capztone.driver
 
 import android.content.Context
@@ -26,7 +24,7 @@ import com.google.firebase.database.ValueEventListener
 import java.text.SimpleDateFormat
 import java.util.*
 
-class     OrderAdapter(private val context: Context, private val username: String?) :
+class OrderAdapter(private val context: Context, private val username: String?) :
     RecyclerView.Adapter<OrderAdapter.OrderViewHolder>() {
 
     private var orderList: List<Order> = emptyList()
@@ -83,9 +81,12 @@ class     OrderAdapter(private val context: Context, private val username: Strin
 
             addressTextView.text = "${order.address}"
             selectedSlotTextView.text = "${order.selectedSlot}"
-            shopnameTextView.text = "${order.shopNames}"
-            foodnameTextView.text = "${order.foodNames}"
-            foodquantityTextView.text = "${order.foodQuantities}"
+
+            // Remove brackets by using joinToString() to convert lists to comma-separated strings
+            shopnameTextView.text = order.shopNames.joinToString(", ")
+            foodnameTextView.text = order.foodNames.joinToString(", ")
+            foodquantityTextView.text = order.foodQuantities.joinToString(", ")
+
             orderdateTextView.text = "${order.orderDate}"
 
             val statusReference = firebaseDatabase.child("status").child(order.itemPushKey)
@@ -96,25 +97,50 @@ class     OrderAdapter(private val context: Context, private val username: Strin
                     deliveryMessageTextView.text = status
 
                     when (status) {
-
                         "Order delivered" -> {
                             btnConfirmed.isEnabled = false
                             btnViewDetails.isEnabled = false
                             btnDelivered.isEnabled = false
-                            btnViewDetails.setBackgroundColor(ContextCompat.getColor(context, R.color.navy))
-                            btnConfirmed.setBackgroundColor(ContextCompat.getColor(context, R.color.navy))
-                            btnDelivered.setBackgroundColor(ContextCompat.getColor(context, R.color.navy))
+                            btnViewDetails.setBackgroundColor(
+                                ContextCompat.getColor(
+                                    context, R.color.navy
+                                )
+                            )
+                            btnConfirmed.setBackgroundColor(
+                                ContextCompat.getColor(
+                                    context, R.color.navy
+                                )
+                            )
+                            btnDelivered.setBackgroundColor(
+                                ContextCompat.getColor(
+                                    context, R.color.navy
+                                )
+                            )
                             itemView.alpha = 0.5f
                         }
+
                         "Order picked" -> {
                             btnViewDetails.isEnabled = false
                             btnConfirmed.isEnabled = false
-                            btnViewDetails.setBackgroundColor(ContextCompat.getColor(context, R.color.lnavy))
-                            btnConfirmed.setBackgroundColor(ContextCompat.getColor(context, R.color.lnavy))
+                            btnViewDetails.setBackgroundColor(
+                                ContextCompat.getColor(
+                                    context, R.color.lnavy
+                                )
+                            )
+                            btnConfirmed.setBackgroundColor(
+                                ContextCompat.getColor(
+                                    context, R.color.lnavy
+                                )
+                            )
                         }
-                        "Order comfirmed" -> {
+
+                        "Order confirmed" -> {
                             btnConfirmed.isEnabled = false
-                            btnConfirmed.setBackgroundColor(ContextCompat.getColor(context, R.color.lnavy))
+                            btnConfirmed.setBackgroundColor(
+                                ContextCompat.getColor(
+                                    context, R.color.lnavy
+                                )
+                            )
                             itemView.alpha = 0.5f
                         }
 
@@ -122,20 +148,34 @@ class     OrderAdapter(private val context: Context, private val username: Strin
                             btnViewDetails.isEnabled = true
                             btnConfirmed.isEnabled = true
                             btnDelivered.isEnabled = true
-                            btnViewDetails.setBackgroundColor(ContextCompat.getColor(context, R.color.navy))
-                            btnConfirmed.setBackgroundColor(ContextCompat.getColor(context, R.color.navy))
-                            btnDelivered.setBackgroundColor(ContextCompat.getColor(context, R.color.navy))
+                            btnViewDetails.setBackgroundColor(
+                                ContextCompat.getColor(
+                                    context, R.color.navy
+                                )
+                            )
+                            btnConfirmed.setBackgroundColor(
+                                ContextCompat.getColor(
+                                    context, R.color.navy
+                                )
+                            )
+                            btnDelivered.setBackgroundColor(
+                                ContextCompat.getColor(
+                                    context, R.color.navy
+                                )
+                            )
                             itemView.alpha = 1.0f
                         }
-
-
                     }
                 }
 
                 override fun onCancelled(databaseError: DatabaseError) {
-                    Log.e("Firebase", "Error fetching status from Firebase: ${databaseError.message}")
+                    Log.e(
+                        "Firebase", "Error fetching status from Firebase: ${databaseError.message}"
+                    )
                 }
             })
+
+
 
             drop.setOnClickListener { showPopupMenu(order.itemPushKey) }
 
@@ -147,27 +187,44 @@ class     OrderAdapter(private val context: Context, private val username: Strin
             // Handle button states based on time comparison
             if (!isWithinSlotTime) {
                 btnViewDetails.setOnClickListener {
-                    Toast.makeText(context, "Please click slot during time only", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        context, "Please click slot during time only", Toast.LENGTH_SHORT
+                    ).show()
                 }
                 btnConfirmed.setOnClickListener {
-                    Toast.makeText(context, "Please click slot during time only", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        context, "Please click slot during time only", Toast.LENGTH_SHORT
+                    ).show()
                 }
                 btnDelivered.setOnClickListener {
-                    Toast.makeText(context, "Please click slot during time only", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        context, "Please click slot during time only", Toast.LENGTH_SHORT
+                    ).show()
                 }
             } else {
                 // Existing functionality when the current time is within the slot
                 btnViewDetails.setOnClickListener {
-                    launchGoogleMapsDirections(order.address)
+                    val fullAddress = order.address // This contains name, address, and phone number
+                    val validAddress = extractValidAddress(fullAddress)
+
+                    launchGoogleMapsDirections(validAddress)
                     saveMessageToFirebase(order.itemPushKey, "Order picked", order.shopNames)
+
                     btnConfirmed.isEnabled = false
                     btnViewDetails.isEnabled = false
-                    btnViewDetails.setBackgroundColor(ContextCompat.getColor(context, R.color.lnavy))
+                    btnViewDetails.setBackgroundColor(
+                        ContextCompat.getColor(
+                            context, R.color.lnavy
+                        )
+                    )
                 }
+
 
                 btnConfirmed.setOnClickListener {
                     if (!estimatedTimeSet) {
-                        Toast.makeText(context, "Please set estimated time first", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            context, "Please set estimated time first", Toast.LENGTH_SHORT
+                        ).show()
                         return@setOnClickListener
                     }
                     saveMessageToFirebase(order.itemPushKey, "Order confirmed", order.shopNames)
@@ -201,6 +258,29 @@ class     OrderAdapter(private val context: Context, private val username: Strin
             }
 
         }
+
+        fun extractValidAddress(fullAddress: String): String {
+            // Split the address by spaces
+            val parts = fullAddress.split(" ")
+
+            // Ensure the address has at least a valid structure (name, possible street, city/state, and phone number)
+            if (parts.size >= 4) {
+                // Try to identify the phone number by detecting a '+' or 10-digit pattern (e.g., +91 6380152803 or 9876543210)
+                val phoneIndex = parts.indexOfFirst { it.contains("+") || it.length == 10 }
+
+                // If a phone number is found, extract the valid address components before the phone number
+                if (phoneIndex != -1 && phoneIndex >= 2) {
+                    // Join all parts before the phone number, skipping the first name part (index 0 and 1)
+                    val addressParts = parts.subList(1, phoneIndex).joinToString(" ")
+
+                    return addressParts.trim()  // Return the combined address before the phone number
+                }
+            }
+
+            // Fallback to returning the full address if format is unexpected
+            return fullAddress
+        }
+
         // Function to get the current time in 24-hour format (e.g., "09:50")
         private fun getCurrentTime(): String {
             val sdf = SimpleDateFormat("hh:mm a", Locale.getDefault())
@@ -223,13 +303,13 @@ class     OrderAdapter(private val context: Context, private val username: Strin
                 val startTimeDate = sdf.parse(startTime)
                 val endTimeDate = sdf.parse(endTime)
 
-                currentTimeDate != null && startTimeDate != null && endTimeDate != null &&
-                        currentTimeDate.after(startTimeDate) && currentTimeDate.before(endTimeDate)
+                currentTimeDate != null && startTimeDate != null && endTimeDate != null && currentTimeDate.after(
+                    startTimeDate
+                ) && currentTimeDate.before(endTimeDate)
             } catch (e: Exception) {
                 false
             }
         }
-
 
 
         private fun showPopupMenu(orderId: String) {
@@ -241,14 +321,17 @@ class     OrderAdapter(private val context: Context, private val username: Strin
                         saveMenuItemToFirebase(orderId, "15 mins")
                         estimatedTimeSet = true // Mark estimated time as set
                     }
+
                     R.id.menu_30mins -> {
                         saveMenuItemToFirebase(orderId, "30 mins")
                         estimatedTimeSet = true // Mark estimated time as set
                     }
+
                     R.id.menu_45mins -> {
                         saveMenuItemToFirebase(orderId, "45 mins")
                         estimatedTimeSet = true // Mark estimated time as set
                     }
+
                     R.id.menu_1hr -> {
                         saveMenuItemToFirebase(orderId, "1 hr")
                         estimatedTimeSet = true // Mark estimated time as set
@@ -269,14 +352,11 @@ class     OrderAdapter(private val context: Context, private val username: Strin
             messageData["estimated_time"] = time
             messageData["timestamp"] = getTimeStamp()
 
-            messageReference.setValue(messageData)
-                .addOnSuccessListener {
+            messageReference.setValue(messageData).addOnSuccessListener {
                     Log.d("Firebase", "Estimated time saved to Firebase for order $orderId: $time")
-                }
-                .addOnFailureListener { e ->
+                }.addOnFailureListener { e ->
                     Log.e(
-                        "Firebase",
-                        "Error saving estimated time to Firebase for order $orderId: $e"
+                        "Firebase", "Error saving estimated time to Firebase for order $orderId: $e"
                     )
                 }
         }
@@ -288,7 +368,9 @@ class     OrderAdapter(private val context: Context, private val username: Strin
             context.startActivity(intent)
         }
 
-        private fun saveMessageToFirebase(orderid: String, message: String, shopName: List<String>) {
+        private fun saveMessageToFirebase(
+            orderid: String, message: String, shopName: List<String>
+        ) {
             val firebaseDatabase = FirebaseDatabase.getInstance().reference
             val messageReference = firebaseDatabase.child("status").child(orderid)
 
@@ -302,22 +384,23 @@ class     OrderAdapter(private val context: Context, private val username: Strin
 
                 // Iterate through shopName list and save delivered message to each shop's delivery path
                 shopName.forEach { shop ->
-                    val shopDeliveryReference = firebaseDatabase.child("${shop} delivery").child(orderid)
-                    shopDeliveryReference.setValue(messageData)
-                        .addOnSuccessListener {
-                            Log.d("Firebase", "Delivered message saved to ${shop} delivery: $message")
-                        }
-                        .addOnFailureListener { e ->
-                            Log.e("Firebase", "Error saving delivered message to ${shop} delivery: $e")
+                    val shopDeliveryReference =
+                        firebaseDatabase.child("${shop} delivery").child(orderid)
+                    shopDeliveryReference.setValue(messageData).addOnSuccessListener {
+                            Log.d(
+                                "Firebase", "Delivered message saved to ${shop} delivery: $message"
+                            )
+                        }.addOnFailureListener { e ->
+                            Log.e(
+                                "Firebase", "Error saving delivered message to ${shop} delivery: $e"
+                            )
                         }
                 }
             }
 
-            messageReference.setValue(messageData)
-                .addOnSuccessListener {
+            messageReference.setValue(messageData).addOnSuccessListener {
                     Log.d("Firebase", "Message saved to Firebase: $message")
-                }
-                .addOnFailureListener { e ->
+                }.addOnFailureListener { e ->
                     Log.e("Firebase", "Error saving message to Firebase: $e")
                 }
         }
@@ -337,4 +420,4 @@ class     OrderAdapter(private val context: Context, private val username: Strin
             btnDelivered.isClickable = false // Disable clickability
         }
     }
-} 
+}

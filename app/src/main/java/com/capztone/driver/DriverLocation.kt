@@ -81,7 +81,7 @@ class DriverLocation : AppCompatActivity() {
         binding.progressBar.postDelayed({
             // Hide the ProgressBar once the task is complete
             hideLoading()
-        }, 1500) // Simulating a 3-second task
+        }, 2500) // Simulating a 3-second task
     }
 
     private fun showLoading() {

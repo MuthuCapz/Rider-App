@@ -111,11 +111,7 @@ class MainActivity : AppCompatActivity() {
         performTask()
         viewModel.driverLocationSaved.observe(this) { success ->
             if (success) {
-                Toast.makeText(
-                    this,
-                    "Driver location saved successfully",
-                    Toast.LENGTH_SHORT
-                ).show()
+
             } else {
                 Toast.makeText(
                     this,
@@ -131,7 +127,7 @@ class MainActivity : AppCompatActivity() {
          progressBar.postDelayed({
             // Hide the ProgressBar once the task is complete
             hideLoading()
-        }, 1500) // Simulating a 3-second task
+        }, 2500) // Simulating a 3-second task
     }
 
     private fun showLoading() {
