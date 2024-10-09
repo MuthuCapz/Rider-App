@@ -3,16 +3,21 @@ package com.capztone.driver
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.location.Location
+import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.view.View
 import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import com.capztone.driver.databinding.ActivityDriverLocationBinding
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.firebase.database.FirebaseDatabase
-import java.util.*
 
 class DriverLocation : AppCompatActivity() {
 
@@ -20,13 +25,22 @@ class DriverLocation : AppCompatActivity() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private val viewModel: DriverViewModel by viewModels()
     private lateinit var firebaseDatabase: FirebaseDatabase
+    private lateinit var binding: ActivityDriverLocationBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_driver_location)
+
+        // Initialize ViewBinding
+        binding = ActivityDriverLocationBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         firebaseDatabase = FirebaseDatabase.getInstance()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+            window.statusBarColor = android.graphics.Color.TRANSPARENT
+        }
 
         // Check if the location permission is granted, if not request it
         if (checkLocationPermission()) {
@@ -35,13 +49,19 @@ class DriverLocation : AppCompatActivity() {
             requestLocationPermission()
         }
 
-        viewModel.driverLocationSaved.observe(this, { success ->
+        // Show the ProgressBar when some task starts
+        showLoading()
+
+        // Simulate a task (e.g., fetching data)
+        performTask()
+        viewModel.driverLocationSaved.observe(this) { success ->
             if (success) {
                 Toast.makeText(
                     this,
                     "Driver location saved successfully",
                     Toast.LENGTH_SHORT
                 ).show()
+
                 // Assuming MainActivity is your main activity
                 val intent = Intent(this, MainActivity::class.java)
                 startActivity(intent)
@@ -53,9 +73,24 @@ class DriverLocation : AppCompatActivity() {
                     Toast.LENGTH_SHORT
                 ).show()
             }
-        })
+        }
+    }
+    private fun performTask() {
+        // Simulate a delay (e.g., network request)
+        // You can replace this with your actual task logic
+        binding.progressBar.postDelayed({
+            // Hide the ProgressBar once the task is complete
+            hideLoading()
+        }, 1500) // Simulating a 3-second task
     }
 
+    private fun showLoading() {
+        binding.progressBar.visibility = View.VISIBLE
+    }
+
+    private fun hideLoading() {
+        binding.progressBar.visibility = View.GONE
+    }
     private fun checkLocationPermission(): Boolean {
         return ActivityCompat.checkSelfPermission(
             this,
@@ -86,7 +121,6 @@ class DriverLocation : AppCompatActivity() {
                     "Location permission denied",
                     Toast.LENGTH_SHORT
                 ).show()
-                // Handle permission denied case, maybe show some dialog or explanation
             }
         }
     }

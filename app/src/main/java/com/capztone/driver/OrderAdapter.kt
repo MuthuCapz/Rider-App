@@ -101,20 +101,20 @@ class     OrderAdapter(private val context: Context, private val username: Strin
                             btnConfirmed.isEnabled = false
                             btnViewDetails.isEnabled = false
                             btnDelivered.isEnabled = false
-                            btnViewDetails.setBackgroundColor(ContextCompat.getColor(context, R.color.green))
-                            btnConfirmed.setBackgroundColor(ContextCompat.getColor(context, R.color.green))
-                            btnDelivered.setBackgroundColor(ContextCompat.getColor(context, R.color.green))
+                            btnViewDetails.setBackgroundColor(ContextCompat.getColor(context, R.color.navy))
+                            btnConfirmed.setBackgroundColor(ContextCompat.getColor(context, R.color.navy))
+                            btnDelivered.setBackgroundColor(ContextCompat.getColor(context, R.color.navy))
                             itemView.alpha = 0.5f
                         }
                         "Order picked" -> {
                             btnViewDetails.isEnabled = false
                             btnConfirmed.isEnabled = false
-                            btnViewDetails.setBackgroundColor(ContextCompat.getColor(context, R.color.greenlightt))
-                            btnConfirmed.setBackgroundColor(ContextCompat.getColor(context, R.color.greenlightt))
+                            btnViewDetails.setBackgroundColor(ContextCompat.getColor(context, R.color.lnavy))
+                            btnConfirmed.setBackgroundColor(ContextCompat.getColor(context, R.color.lnavy))
                         }
                         "Order comfirmed" -> {
                             btnConfirmed.isEnabled = false
-                            btnConfirmed.setBackgroundColor(ContextCompat.getColor(context, R.color.greenlightt))
+                            btnConfirmed.setBackgroundColor(ContextCompat.getColor(context, R.color.lnavy))
                             itemView.alpha = 0.5f
                         }
 
@@ -122,9 +122,9 @@ class     OrderAdapter(private val context: Context, private val username: Strin
                             btnViewDetails.isEnabled = true
                             btnConfirmed.isEnabled = true
                             btnDelivered.isEnabled = true
-                            btnViewDetails.setBackgroundColor(ContextCompat.getColor(context, R.color.green))
-                            btnConfirmed.setBackgroundColor(ContextCompat.getColor(context, R.color.green))
-                            btnDelivered.setBackgroundColor(ContextCompat.getColor(context, R.color.green))
+                            btnViewDetails.setBackgroundColor(ContextCompat.getColor(context, R.color.navy))
+                            btnConfirmed.setBackgroundColor(ContextCompat.getColor(context, R.color.navy))
+                            btnDelivered.setBackgroundColor(ContextCompat.getColor(context, R.color.navy))
                             itemView.alpha = 1.0f
                         }
 
@@ -162,7 +162,7 @@ class     OrderAdapter(private val context: Context, private val username: Strin
                     saveMessageToFirebase(order.itemPushKey, "Order picked", order.shopNames)
                     btnConfirmed.isEnabled = false
                     btnViewDetails.isEnabled = false
-                    btnViewDetails.setBackgroundColor(ContextCompat.getColor(context, R.color.greenlightt))
+                    btnViewDetails.setBackgroundColor(ContextCompat.getColor(context, R.color.lnavy))
                 }
 
                 btnConfirmed.setOnClickListener {
@@ -172,7 +172,7 @@ class     OrderAdapter(private val context: Context, private val username: Strin
                     }
                     saveMessageToFirebase(order.itemPushKey, "Order confirmed", order.shopNames)
                     btnConfirmed.isEnabled = false
-                    btnConfirmed.setBackgroundColor(ContextCompat.getColor(context, R.color.greenlightt))
+                    btnConfirmed.setBackgroundColor(ContextCompat.getColor(context, R.color.lnavy))
                 }
 
                 btnDelivered.setOnClickListener {
@@ -180,7 +180,7 @@ class     OrderAdapter(private val context: Context, private val username: Strin
                     btnConfirmed.isEnabled = false
                     btnViewDetails.isEnabled = false
                     btnDelivered.isEnabled = false
-                    btnDelivered.setBackgroundColor(ContextCompat.getColor(context, R.color.greenlightt))
+                    btnDelivered.setBackgroundColor(ContextCompat.getColor(context, R.color.lnavy))
                 }
             }
 

@@ -5,10 +5,16 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.location.Geocoder
 import android.location.Location
+import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.view.View
 import android.widget.ImageView
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.viewModels
@@ -16,6 +22,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.capztone.driver.databinding.ActivityMainBinding
+import com.google.android.gms.auth.api.signin.GoogleSignIn
+import com.google.android.gms.auth.api.signin.GoogleSignInClient
+import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.firebase.auth.FirebaseAuth
@@ -30,9 +40,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private val viewModel: DriverViewModel by viewModels()
     private lateinit var firebaseDatabase: FirebaseDatabase
-
+    private lateinit var googleSignInClient: GoogleSignInClient
     private val LOCATION_PERMISSION_REQUEST_CODE = 1001
-
+    private lateinit var progressBar: ProgressBar
     @SuppressLint("MissingInflatedId")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,7 +50,15 @@ class MainActivity : AppCompatActivity() {
 
         // Initialize Firebase Database
         mAuth = FirebaseAuth.getInstance()
-
+        window?.let { window ->
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+                window.statusBarColor = Color.WHITE
+            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                window.statusBarColor = Color.WHITE
+            }
+        }
         // Get the current user
         val currentUser = mAuth.currentUser
         databaseReference = FirebaseDatabase.getInstance().reference.child("OrderDetails")
@@ -50,9 +68,18 @@ class MainActivity : AppCompatActivity() {
         logoutImageView.setOnClickListener {
             logout()
         }
+// Initialize GoogleSignInOptions
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(getString(R.string.default_web_client_Id)) // Your web client ID
+            .requestEmail()
+            .build()
 
+        // Initialize GoogleSignInClient
+        googleSignInClient = GoogleSignIn.getClient(this, gso)
         // Initialize orderAdapter
         orderRecyclerView = findViewById(R.id.orderRecyclerView)
+        progressBar = findViewById(R.id.progressBar)
+
 
         currentUser?.let { user ->
             val userName = user.displayName
@@ -77,7 +104,11 @@ class MainActivity : AppCompatActivity() {
         } else {
             requestLocationPermission()
         }
+        // Show the ProgressBar when some task starts
+        showLoading()
 
+        // Simulate a task (e.g., fetching data)
+        performTask()
         viewModel.driverLocationSaved.observe(this) { success ->
             if (success) {
                 Toast.makeText(
@@ -94,7 +125,22 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+    private fun performTask() {
+        // Simulate a delay (e.g., network request)
+        // You can replace this with your actual task logic
+         progressBar.postDelayed({
+            // Hide the ProgressBar once the task is complete
+            hideLoading()
+        }, 1500) // Simulating a 3-second task
+    }
 
+    private fun showLoading() {
+         progressBar.visibility = View.VISIBLE
+    }
+
+    private fun hideLoading() {
+        progressBar.visibility = View.GONE
+    }
     private fun checkLocationPermission(): Boolean {
         return ActivityCompat.checkSelfPermission(
             this,
@@ -150,12 +196,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun fetchDriverDistance(onDistanceFetched: (Int) -> Unit) {
-        val driverDistanceRef = firebaseDatabase.getReference("Admin/spXRl1jY4yTlhDKZJzLicp8E9kc2/DriverDistance")
+        val driverDistanceRef = firebaseDatabase.getReference("Admins/spXRl1jY4yTlhDKZJzLicp8E9kc2/Driver Distance")
         driverDistanceRef.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                val distance = snapshot.getValue(Int::class.java) ?: 5 // Default to 5 km if not set
+                val distanceString = snapshot.getValue(String::class.java) // Get the value as a String
+                val distance = distanceString?.toIntOrNull() ?: 5 // Convert to Int, default to 5 if conversion fails
                 onDistanceFetched(distance)
             }
+
 
             override fun onCancelled(error: DatabaseError) {
                 Toast.makeText(this@MainActivity, "Failed to fetch driver distance", Toast.LENGTH_SHORT).show()
@@ -225,8 +273,14 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun logout() {
+        // Sign out from Firebase
         mAuth.signOut()
-        startActivity(Intent(this, LoginActivity::class.java))
-        finish()
+
+        // Sign out from Google
+        googleSignInClient.signOut().addOnCompleteListener(this) {
+            // After signing out from Google, redirect to login screen
+            startActivity(Intent(this, LoginActivity::class.java))
+            finish()
+        }
     }
 }

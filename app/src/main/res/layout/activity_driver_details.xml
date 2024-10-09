@@ -5,7 +5,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white"
+    android:background="@color/llorange"
     tools:context=".DriverDetails">
     <TextView
         android:id="@+id/title"
@@ -18,11 +18,12 @@
         android:textColor="@color/black"
         android:textSize="23sp"
         android:fontFamily="@font/lato_bold"
-        android:layout_marginTop="25dp"/>
+        android:layout_marginTop="40dp"/>
     <LinearLayout
         android:id="@+id/linear"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="30dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

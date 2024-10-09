@@ -1,8 +1,10 @@
 package com.capztone.driver
 
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
+import android.view.View
 import android.view.animation.AnimationSet
 import android.view.animation.AnimationUtils
 import android.view.animation.TranslateAnimation
@@ -26,7 +28,10 @@ class SplashScreen : AppCompatActivity() {
         binding.imageView4.setAnimation("login.json")
         binding.imageView4.playAnimation()
 
-
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+            window.statusBarColor = android.graphics.Color.TRANSPARENT
+        }
         // Translate animation to move image from top to center
         val translateAnimation = TranslateAnimation(0f, 500f, 500f, 0f)
         translateAnimation.duration = 1000 // Set duration as needed

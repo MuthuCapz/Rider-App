@@ -5,7 +5,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/Lblue"
+    android:background="@color/llorange"
     tools:context=".LoginActivity">
     <TextView
         android:layout_width="wrap_content"
@@ -17,7 +17,7 @@
         android:textSize="30sp"
         android:textColor="@color/black"
         android:fontFamily="@font/lato_bold"
-        android:layout_marginTop="30dp"/>
+        android:layout_marginTop="50dp"/>
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -28,7 +28,7 @@
         android:textSize="25sp"
         android:textColor="@color/navy"
         android:fontFamily="@font/lato_bold"
-        android:layout_marginTop="80dp"/>
+        android:layout_marginTop="100dp"/>
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -39,7 +39,7 @@
         android:textSize="18sp"
         android:textColor="@color/Lblack"
         android:fontFamily="@font/lato_bold"
-        android:layout_marginTop="130dp"/>
+        android:layout_marginTop="150dp"/>
 
     <ImageView
        android:layout_width="500dp"
@@ -47,7 +47,7 @@
        app:layout_constraintStart_toStartOf="parent"
        app:layout_constraintTop_toTopOf="parent"
        app:layout_constraintEnd_toEndOf="parent"
-       android:layout_marginTop="160dp"
+       android:layout_marginTop="180dp"
        android:scaleX="-1"
        android:src="@drawable/delivery"/>
 
@@ -64,7 +64,7 @@
         android:textSize="20sp"
         android:textColor="@color/black"
         android:textAllCaps="false"
-        android:layout_marginTop="540dp"
+        android:layout_marginTop="560dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
