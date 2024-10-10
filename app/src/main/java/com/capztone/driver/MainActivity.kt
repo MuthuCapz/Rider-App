@@ -31,6 +31,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.capztone.driver.databinding.ActivityMainBinding
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
@@ -53,6 +54,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var googleSignInClient: GoogleSignInClient
     private val LOCATION_PERMISSION_REQUEST_CODE = 1001
     private lateinit var progressBar: ProgressBar
+    private lateinit var swipeRefreshLayout: SwipeRefreshLayout
     @SuppressLint("MissingInflatedId")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,10 +65,10 @@ class MainActivity : AppCompatActivity() {
         window?.let { window ->
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                 window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
-                window.statusBarColor = Color.WHITE
+                window.statusBarColor = Color.TRANSPARENT
             } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                 window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                window.statusBarColor = Color.WHITE
+                window.statusBarColor = Color.TRANSPARENT
             }
         }
         if (!isInternetAvailable()) {
@@ -76,6 +78,10 @@ class MainActivity : AppCompatActivity() {
         // Get the current user
         val currentUser = mAuth.currentUser
         databaseReference = FirebaseDatabase.getInstance().reference.child("OrderDetails")
+        swipeRefreshLayout = findViewById(R.id.swipe)
+        // Set up pull-to-refresh logic
+        setupSwipeToRefresh()
+
         val logoutImageView: ImageView = findViewById(R.id.logout)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         firebaseDatabase = FirebaseDatabase.getInstance()
@@ -134,6 +140,30 @@ class MainActivity : AppCompatActivity() {
                 ).show()
             }
         }
+    }
+
+    private fun setupSwipeToRefresh() {
+        swipeRefreshLayout.setOnRefreshListener {
+            // Show progress bar and refresh data
+            refreshData()
+        }
+
+        // Optional: Set color scheme for the progress spinner
+        swipeRefreshLayout.setColorSchemeColors(
+            Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW
+        )
+    }
+    private fun refreshData() {
+        // Simulate data refresh or fetch new data from Firebase
+        Handler(Looper.getMainLooper()).postDelayed({
+            // Stop showing the loading spinner after the task is done
+            swipeRefreshLayout.isRefreshing = false
+            Toast.makeText(this, "refreshed!", Toast.LENGTH_SHORT).show()
+
+            // Perform your actual data fetch task here (e.g., fetchOrders again)
+            performTask()
+
+        }, 2000) // Simulate 2-second refresh
     }
     private fun isInternetAvailable(): Boolean {
         val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
@@ -284,8 +314,8 @@ class MainActivity : AppCompatActivity() {
         })
     }
     private fun fetchOrders(driverLocation: Location, targetDistance: Int) {
-        // Fetch order details from Firebase
-        databaseReference.addListenerForSingleValueEvent(object : ValueEventListener {
+        // Fetch order details from Firebase and listen for real-time updates
+        databaseReference.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val orders = mutableListOf<Order>()
                 var hasValidOrders = false // Flag to check if there are any valid orders
@@ -294,15 +324,19 @@ class MainActivity : AppCompatActivity() {
                 for (orderSnapshot in snapshot.children) {
                     val orderId = orderSnapshot.key // Get order ID
                     val order = orderSnapshot.getValue(Order::class.java)
+                    val driverId = orderSnapshot.child("Driver Id").value as? String // Retrieve the DriverId from the database
 
                     if (orderId != null && order != null) {
-                        val deliveryAddress = order.address
-                        if (deliveryAddress != null) {
-                            // Get latitude and longitude of delivery address
-                            val geocoder = Geocoder(applicationContext)
-                            val addressList = geocoder.getFromLocationName(deliveryAddress, 1)
-                            if (addressList != null) {
-                                if (addressList.isNotEmpty()) {
+                        val currentUserId = mAuth.currentUser?.uid // Get current driver's ID
+
+                        // Retrieve orders based on DriverId logic
+                        if (driverId == null || driverId == currentUserId) {
+                            val deliveryAddress = order.address
+                            if (deliveryAddress != null) {
+                                // Get latitude and longitude of delivery address
+                                val geocoder = Geocoder(applicationContext)
+                                val addressList = geocoder.getFromLocationName(deliveryAddress, 1)
+                                if (addressList != null && addressList.isNotEmpty()) {
                                     val address = addressList[0]
                                     val deliveryLocation = Location("").apply {
                                         latitude = address.latitude
@@ -337,7 +371,6 @@ class MainActivity : AppCompatActivity() {
                     hasValidOrders -> {
                         // Valid orders within distance found
                         orderAdapter.submitList(orders) // Update RecyclerView with valid orders
-
                     }
                 }
             }
@@ -348,6 +381,7 @@ class MainActivity : AppCompatActivity() {
             }
         })
     }
+
     private fun distanceBetween(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
         val R = 6371 // Radius of the Earth in km
         val dLat = Math.toRadians(lat2 - lat1)

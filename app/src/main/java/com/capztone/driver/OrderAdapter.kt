@@ -16,6 +16,7 @@ import android.widget.Toast
 import androidx.cardview.widget.CardView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
@@ -226,6 +227,10 @@ class OrderAdapter(private val context: Context, private val username: String?) 
                     }
 
                 }
+                btnConfirmed.setOnClickListener {
+
+
+                }
 
 
                 btnConfirmed.setOnClickListener {
@@ -235,10 +240,54 @@ class OrderAdapter(private val context: Context, private val username: String?) 
                         ).show()
                         return@setOnClickListener
                     }
+                    val orderId = order.itemPushKey // Get the current item's order ID
+                    val currentUserId = FirebaseAuth.getInstance().currentUser?.uid // G
+
+                    if (currentUserId == null) {
+                        Toast.makeText(context, "User not authenticated", Toast.LENGTH_SHORT).show()
+                        return@setOnClickListener
+                    }
+
+                    // Reference to "Order Details" in Firebase
+                    val orderDetailsRef = firebaseDatabase.child("OrderDetails")
+
+                    // Check if the order ID exists in Firebase
+                    orderDetailsRef.addListenerForSingleValueEvent(object : ValueEventListener {
+                        override fun onDataChange(dataSnapshot: DataSnapshot) {
+                            var orderMatched = false
+
+                            // Loop through each child (order ID) under "Order Details"
+                            for (orderSnapshot in dataSnapshot.children) {
+                                val firebaseOrderId = orderSnapshot.key // Get the order ID from Firebase
+
+                                if (firebaseOrderId == orderId) {
+                                    // Order ID matches, store the user ID under this order ID in Firebase
+                                    orderDetailsRef.child(orderId).child("Driver Id").setValue(currentUserId)
+                                        .addOnSuccessListener {
+                                            Toast.makeText(context, "Order confirmed and user ID saved", Toast.LENGTH_SHORT).show()
+                                        }
+                                        .addOnFailureListener {
+                                            Toast.makeText(context, "Failed to save user ID", Toast.LENGTH_SHORT).show()
+                                        }
+                                    orderMatched = true
+                                    break // Exit the loop once a match is found
+                                }
+                            }
+
+                            if (!orderMatched) {
+                                Toast.makeText(context, "Order ID not found in Firebase", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+
+                        override fun onCancelled(databaseError: DatabaseError) {
+                            Log.e("Firebase", "Error fetching order details: ${databaseError.message}")
+                        }
+                    })
                     saveMessageToFirebase(order.itemPushKey, "Order confirmed", order.shopNames)
                     btnConfirmed.isEnabled = false
                     btnConfirmed.setBackgroundColor(ContextCompat.getColor(context, R.color.lnavy))
                 }
+
 
                 btnDelivered.setOnClickListener {
 

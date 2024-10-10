@@ -59,6 +59,7 @@ dependencies {
     implementation("com.google.firebase:firebase-storage-ktx:20.3.0")
     implementation("androidx.activity:activity:1.8.0")
     implementation("androidx.cardview:cardview:1.0.0")
+    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
     testImplementation("junit:junit:4.13.2")
     implementation ("de.hdodenhof:circleimageview:3.1.0")
     implementation("com.airbnb.android:lottie:6.0.1")
