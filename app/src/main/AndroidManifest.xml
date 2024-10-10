@@ -30,6 +30,12 @@
             android:name=".DriverDetails"
             android:exported="true" />
         <activity
+            android:name=".LocationNotAvailable"
+            android:exported="true" />
+        <activity
+            android:name=".OrderEmptyActivity"
+            android:exported="true" />
+        <activity
             android:name=".SplashScreen"
             android:exported="true">
             <intent-filter>

@@ -3,21 +3,30 @@ package com.capztone.driver
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.location.Geocoder
 import android.location.Location
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
+import android.view.LayoutInflater
 import android.view.View
+import android.widget.Button
 import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.viewModels
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -28,6 +37,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 
@@ -59,6 +69,10 @@ class MainActivity : AppCompatActivity() {
                 window.statusBarColor = Color.WHITE
             }
         }
+        if (!isInternetAvailable()) {
+            showNoInternetDialog()
+        }
+
         // Get the current user
         val currentUser = mAuth.currentUser
         databaseReference = FirebaseDatabase.getInstance().reference.child("OrderDetails")
@@ -66,7 +80,7 @@ class MainActivity : AppCompatActivity() {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         firebaseDatabase = FirebaseDatabase.getInstance()
         logoutImageView.setOnClickListener {
-            logout()
+            showLogoutConfirmationDialog()
         }
 // Initialize GoogleSignInOptions
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
@@ -121,6 +135,69 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+    private fun isInternetAvailable(): Boolean {
+        val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val networkCapabilities = connectivityManager.activeNetwork?.let {
+                connectivityManager.getNetworkCapabilities(it)
+            }
+            networkCapabilities?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
+        } else {
+            @Suppress("DEPRECATION")
+            val activeNetworkInfo = connectivityManager.activeNetworkInfo
+            activeNetworkInfo != null && activeNetworkInfo.isConnected
+        }
+    }
+
+    private fun showNoInternetDialog() {
+        // Inflate the custom layout
+        val dialogView = layoutInflater.inflate(R.layout.dialog_no_internet, null)
+
+        // Create the dialog using MaterialAlertDialogBuilder
+        val builder = MaterialAlertDialogBuilder(this)
+        builder.setView(dialogView) // Set the custom layout
+            .setCancelable(false) // Prevent closing the dialog
+
+        val dialog = builder.create()
+
+        // Initialize the buttons in the custom dialog
+        val retryButton: Button = dialogView.findViewById(R.id.dialog_button_yes)
+        val exitButton: Button = dialogView.findViewById(R.id.dialog_button_no)
+
+        retryButton.setOnClickListener {
+            if (isInternetAvailable()) {
+                dialog.dismiss() // Dismiss the dialog if the internet is available
+                // Proceed with network operations if needed
+            } else {
+                isInternetAvailable() // Check internet and show dialog again if still no internet
+            }
+        }
+
+        exitButton.setOnClickListener {
+            finish() // Close the app if the user chooses to exit
+        }
+
+        // Show the dialog if there's no internet
+        if (!dialog.isShowing) {
+            dialog.show()
+        }
+    }
+
+    private val networkReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            isInternetAvailable()
+        }
+    }
+    override fun onStart() {
+        super.onStart()
+        registerReceiver(networkReceiver, IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION))
+    }
+    override fun onStop() {
+        super.onStop()
+        unregisterReceiver(networkReceiver)
+    }
+
+
     private fun performTask() {
         // Simulate a delay (e.g., network request)
         // You can replace this with your actual task logic
@@ -211,6 +288,8 @@ class MainActivity : AppCompatActivity() {
         databaseReference.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val orders = mutableListOf<Order>()
+                var hasValidOrders = false // Flag to check if there are any valid orders
+                var allOrdersOutsideDistance = true // Flag to check if all orders are outside distance
 
                 for (orderSnapshot in snapshot.children) {
                     val orderId = orderSnapshot.key // Get order ID
@@ -224,21 +303,20 @@ class MainActivity : AppCompatActivity() {
                             val addressList = geocoder.getFromLocationName(deliveryAddress, 1)
                             if (addressList != null) {
                                 if (addressList.isNotEmpty()) {
-                                    val address = addressList?.get(0)
+                                    val address = addressList[0]
                                     val deliveryLocation = Location("").apply {
-                                        if (address != null) {
-                                            latitude = address.latitude
-                                        }
-                                        if (address != null) {
-                                            longitude = address.longitude
-                                        }
+                                        latitude = address.latitude
+                                        longitude = address.longitude
                                     }
 
                                     // Calculate distance between driver and delivery address
                                     val distance = driverLocation.distanceTo(deliveryLocation) / 1000 // in km
 
+                                    // Check if the distance is within the target distance
                                     if (distance <= targetDistance) {
-                                        orders.add(order)
+                                        orders.add(order) // Add order if within distance
+                                        hasValidOrders = true // Mark that there are valid orders
+                                        allOrdersOutsideDistance = false // At least one order is within distance
                                     }
                                 }
                             }
@@ -246,16 +324,30 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
 
-                // Update RecyclerView with filtered orders
-                orderAdapter.submitList(orders)
+                // Determine navigation based on orders retrieved
+                when {
+                    orders.isEmpty() -> {
+                        // No valid orders found
+                        startActivity(Intent(this@MainActivity, OrderEmptyActivity::class.java))
+                    }
+                    allOrdersOutsideDistance -> {
+                        // All orders are outside the specified distance
+                        startActivity(Intent(this@MainActivity, LocationNotAvailable::class.java))
+                    }
+                    hasValidOrders -> {
+                        // Valid orders within distance found
+                        orderAdapter.submitList(orders) // Update RecyclerView with valid orders
+
+                    }
+                }
             }
 
             override fun onCancelled(error: DatabaseError) {
                 // Handle error
+                Log.e("FirebaseError", "Error retrieving orders: ${error.message}")
             }
         })
     }
-
     private fun distanceBetween(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
         val R = 6371 // Radius of the Earth in km
         val dLat = Math.toRadians(lat2 - lat1)
@@ -267,7 +359,27 @@ class MainActivity : AppCompatActivity() {
         return R * c // Distance in km
     }
 
+    private fun showLogoutConfirmationDialog() {
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_logout_confirmation, null)
+        val dialogBuilder = AlertDialog.Builder(this)
+            .setView(dialogView)
 
+        val alertDialog = dialogBuilder.create()
+
+        dialogView.findViewById<View>(R.id.btnDialogYes).setOnClickListener {
+            // Perform logout action
+            logout()
+            alertDialog.dismiss()
+        }
+
+        dialogView.findViewById<View>(R.id.btnDialogNo).setOnClickListener {
+            // Dismiss the dialog
+            alertDialog.dismiss()
+        }
+
+        alertDialog.show()
+        alertDialog.window?.setBackgroundDrawableResource(android.R.color.transparent)
+    }
     private fun logout() {
         // Sign out from Firebase
         mAuth.signOut()

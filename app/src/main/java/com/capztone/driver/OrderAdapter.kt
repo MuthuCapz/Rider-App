@@ -141,7 +141,7 @@ class OrderAdapter(private val context: Context, private val username: String?) 
                                     context, R.color.lnavy
                                 )
                             )
-                            itemView.alpha = 0.5f
+
                         }
 
                         else -> {
@@ -206,17 +206,25 @@ class OrderAdapter(private val context: Context, private val username: String?) 
                 btnViewDetails.setOnClickListener {
                     val fullAddress = order.address // This contains name, address, and phone number
                     val validAddress = extractValidAddress(fullAddress)
+                    val currentStatus = deliveryMessageTextView.text.toString()
+                    if (currentStatus == "Order confirmed") {
+                        // Proceed with confirmation logic
+                        saveMessageToFirebase(order.itemPushKey, "Order accepted", order.shopNames)
+                        launchGoogleMapsDirections(validAddress)
+                        saveMessageToFirebase(order.itemPushKey, "Order picked", order.shopNames)
 
-                    launchGoogleMapsDirections(validAddress)
-                    saveMessageToFirebase(order.itemPushKey, "Order picked", order.shopNames)
-
-                    btnConfirmed.isEnabled = false
-                    btnViewDetails.isEnabled = false
-                    btnViewDetails.setBackgroundColor(
-                        ContextCompat.getColor(
-                            context, R.color.lnavy
+                        btnConfirmed.isEnabled = false
+                        btnViewDetails.isEnabled = false
+                        btnViewDetails.setBackgroundColor(
+                            ContextCompat.getColor(
+                                context, R.color.lnavy
+                            )
                         )
-                    )
+                    } else {
+                        // Show toast if the status is not "Order confirmed"
+                        Toast.makeText(context, "You can only accept an order after it's confirmed.", Toast.LENGTH_SHORT).show()
+                    }
+
                 }
 
 
@@ -233,14 +241,22 @@ class OrderAdapter(private val context: Context, private val username: String?) 
                 }
 
                 btnDelivered.setOnClickListener {
-                    saveMessageToFirebase(order.itemPushKey, "Order delivered", order.shopNames)
-                    btnConfirmed.isEnabled = false
-                    btnViewDetails.isEnabled = false
-                    btnDelivered.isEnabled = false
-                    btnDelivered.setBackgroundColor(ContextCompat.getColor(context, R.color.lnavy))
+
+                    val currentStatus = deliveryMessageTextView.text.toString()
+                    if (currentStatus == "Order accepted") {
+                        // Proceed with delivery logic
+                        saveMessageToFirebase(order.itemPushKey, "Order delivered", order.shopNames)
+                        btnConfirmed.isEnabled = false
+                        btnViewDetails.isEnabled = false
+                        btnDelivered.isEnabled = false
+                        btnDelivered.setBackgroundColor(ContextCompat.getColor(context, R.color.lnavy))
+                    } else {
+                        // Show toast if the status is not "Order accepted"
+                        Toast.makeText(context, "You can only deliver an order after it's accepted.", Toast.LENGTH_SHORT).show()
+                    }
+
                 }
             }
-
 
             if (order.cancellationMessage.isNotBlank()) {
                 cancellationMessageTextView.visibility = View.VISIBLE
