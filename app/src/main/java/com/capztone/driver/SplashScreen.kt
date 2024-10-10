@@ -12,18 +12,23 @@ import androidx.appcompat.app.AppCompatActivity
 import com.capztone.driver.databinding.ActivitySplashScreenBinding
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 
 
 class SplashScreen : AppCompatActivity() {
     private lateinit var binding: ActivitySplashScreenBinding
     private lateinit var mAuth: FirebaseAuth
     private lateinit var mGoogleSignInClient: GoogleSignInClient
+    private lateinit var database: FirebaseDatabase
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivitySplashScreenBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
+        database = FirebaseDatabase.getInstance()
         mAuth = FirebaseAuth.getInstance()
         binding.imageView4.setAnimation("login.json")
         binding.imageView4.playAnimation()
@@ -50,12 +55,38 @@ class SplashScreen : AppCompatActivity() {
 
 
         Handler().postDelayed({
-            if (mAuth.currentUser != null) {
-                startActivity(Intent(this, MainActivity::class.java))
-            } else {
-                startActivity(Intent(this, LoginActivity::class.java))
-            }
-            finish()
+            checkUserInRidersDetails()
         }, 3300) // Adjust delay as needed
+    }
+    private fun checkUserInRidersDetails() {
+        val currentUser = mAuth.currentUser
+        if (currentUser != null) {
+            val userId = currentUser.uid
+            val ridersDetailsRef = database.getReference("Riders Details").child(userId)
+
+            // Check if the userId exists in "Riders Details"
+            ridersDetailsRef.addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    if (snapshot.exists()) {
+                        // User exists in "Riders Details", navigate to MainActivity
+                        startActivity(Intent(this@SplashScreen, MainActivity::class.java))
+                    } else {
+                        // User does not exist, navigate to LoginActivity
+                        startActivity(Intent(this@SplashScreen, LoginActivity::class.java))
+                    }
+                    finish()
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    // Handle database error, possibly navigate to login or show error
+                    startActivity(Intent(this@SplashScreen, LoginActivity::class.java))
+                    finish()
+                }
+            })
+        } else {
+            // If no user is logged in, navigate to LoginActivity
+            startActivity(Intent(this, LoginActivity::class.java))
+            finish()
+        }
     }
 }

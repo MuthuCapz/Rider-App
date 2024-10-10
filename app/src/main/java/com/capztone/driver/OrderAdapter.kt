@@ -209,7 +209,7 @@ class OrderAdapter(private val context: Context, private val username: String?) 
                     val currentStatus = deliveryMessageTextView.text.toString()
                     if (currentStatus == "Order confirmed") {
                         // Proceed with confirmation logic
-                        saveMessageToFirebase(order.itemPushKey, "Order accepted", order.shopNames)
+                        saveMessageToFirebase(order.itemPushKey, "Order picked", order.shopNames)
                         launchGoogleMapsDirections(validAddress)
                         saveMessageToFirebase(order.itemPushKey, "Order picked", order.shopNames)
 
@@ -243,7 +243,7 @@ class OrderAdapter(private val context: Context, private val username: String?) 
                 btnDelivered.setOnClickListener {
 
                     val currentStatus = deliveryMessageTextView.text.toString()
-                    if (currentStatus == "Order accepted") {
+                    if (currentStatus == "Order picked") {
                         // Proceed with delivery logic
                         saveMessageToFirebase(order.itemPushKey, "Order delivered", order.shopNames)
                         btnConfirmed.isEnabled = false
@@ -252,7 +252,7 @@ class OrderAdapter(private val context: Context, private val username: String?) 
                         btnDelivered.setBackgroundColor(ContextCompat.getColor(context, R.color.lnavy))
                     } else {
                         // Show toast if the status is not "Order accepted"
-                        Toast.makeText(context, "You can only deliver an order after it's accepted.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "You can only deliver an order after it's picked.", Toast.LENGTH_SHORT).show()
                     }
 
                 }
@@ -369,12 +369,12 @@ class OrderAdapter(private val context: Context, private val username: String?) 
             messageData["timestamp"] = getTimeStamp()
 
             messageReference.setValue(messageData).addOnSuccessListener {
-                    Log.d("Firebase", "Estimated time saved to Firebase for order $orderId: $time")
-                }.addOnFailureListener { e ->
-                    Log.e(
-                        "Firebase", "Error saving estimated time to Firebase for order $orderId: $e"
-                    )
-                }
+                Log.d("Firebase", "Estimated time saved to Firebase for order $orderId: $time")
+            }.addOnFailureListener { e ->
+                Log.e(
+                    "Firebase", "Error saving estimated time to Firebase for order $orderId: $e"
+                )
+            }
         }
 
         private fun launchGoogleMapsDirections(destination: String) {
@@ -403,22 +403,22 @@ class OrderAdapter(private val context: Context, private val username: String?) 
                     val shopDeliveryReference =
                         firebaseDatabase.child("${shop} delivery").child(orderid)
                     shopDeliveryReference.setValue(messageData).addOnSuccessListener {
-                            Log.d(
-                                "Firebase", "Delivered message saved to ${shop} delivery: $message"
-                            )
-                        }.addOnFailureListener { e ->
-                            Log.e(
-                                "Firebase", "Error saving delivered message to ${shop} delivery: $e"
-                            )
-                        }
+                        Log.d(
+                            "Firebase", "Delivered message saved to ${shop} delivery: $message"
+                        )
+                    }.addOnFailureListener { e ->
+                        Log.e(
+                            "Firebase", "Error saving delivered message to ${shop} delivery: $e"
+                        )
+                    }
                 }
             }
 
             messageReference.setValue(messageData).addOnSuccessListener {
-                    Log.d("Firebase", "Message saved to Firebase: $message")
-                }.addOnFailureListener { e ->
-                    Log.e("Firebase", "Error saving message to Firebase: $e")
-                }
+                Log.d("Firebase", "Message saved to Firebase: $message")
+            }.addOnFailureListener { e ->
+                Log.e("Firebase", "Error saving message to Firebase: $e")
+            }
         }
 
         private fun getTimeStamp(): String {
