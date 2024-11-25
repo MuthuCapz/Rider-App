@@ -7,6 +7,7 @@ import androidx.core.app.ActivityCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.capztone.utils.FirebaseAuthUtil
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.firebase.auth.FirebaseAuth
@@ -18,7 +19,7 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
     private val LOCATION_PERMISSION_REQUEST_CODE = 1001
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var firebaseDatabase: FirebaseDatabase
-    private lateinit var auth: FirebaseAuth
+    private lateinit var mAuth: FirebaseAuth
     private val _driverLocationSaved = MutableLiveData<Boolean>()
     val driverLocationSaved: LiveData<Boolean>
         get() = _driverLocationSaved
@@ -26,18 +27,18 @@ class DriverViewModel(application: Application) : AndroidViewModel(application) 
     init {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(application)
         firebaseDatabase = FirebaseDatabase.getInstance()
-        auth = FirebaseAuth.getInstance()
+       mAuth = FirebaseAuthUtil.auth
     }
 
     fun saveDriverLocation() {
-        val user = auth.currentUser
+        val user = mAuth.currentUser
         if (checkLocationPermission()) {
             fusedLocationClient.lastLocation
                 .addOnSuccessListener { location: Location? ->
                     location?.let {
                         val userId = user?.uid ?: ""
                         val locationData = getLocationData(location)
-                        val formattedDriverId = "Driver ID: $userId"
+                        val formattedDriverId = "$userId"
                         firebaseDatabase.getReference("Driver Location").child(formattedDriverId)
                             .setValue(locationData)
                             .addOnCompleteListener {

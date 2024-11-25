@@ -27,6 +27,14 @@ class OrderEmptyActivity : AppCompatActivity() {
         binding = ActivityOrderEmptyBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-
+        binding.another.setOnClickListener {
+            val intent = Intent(this, DriverLocation::class.java)
+            startActivity(intent)
+        }
+    }
+    override fun onBackPressed() {
+        super.onBackPressed()
+        // This method closes the app when the back button is pressed in MainActivity
+        finishAffinity()
     }
 }

@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import com.capztone.driver.databinding.ActivityLoginBinding
+import com.capztone.utils.FirebaseAuthUtil
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -17,6 +18,9 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class LoginActivity : AppCompatActivity() {
     private lateinit var binding: ActivityLoginBinding
@@ -28,22 +32,18 @@ class LoginActivity : AppCompatActivity() {
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        mAuth = FirebaseAuth.getInstance()
-        window?.let { window ->
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
-                window.statusBarColor = Color.TRANSPARENT
-            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                window.statusBarColor = Color.TRANSPARENT
-            }
-        }
+        mAuth = FirebaseAuthUtil.auth
         configureGoogleSignIn()
+
+        // Sign out from Google to ensure the account selection dialog appears
+        mGoogleSignInClient.signOut()
+
 
         binding.googleLoginbutton.setOnClickListener {
             signInWithGoogle()
         }
     }
+
     private fun configureGoogleSignIn() {
         val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
             .requestIdToken(getString(R.string.default_web_client_Id))
@@ -64,57 +64,58 @@ class LoginActivity : AppCompatActivity() {
                 if (task.isSuccessful) {
                     val isNewUser = task.result?.additionalUserInfo?.isNewUser ?: false
                     if (isNewUser) {
-                        // New user, navigate to DriverDetails
                         startActivity(Intent(this@LoginActivity, DriverDetails::class.java))
-                        finish() // Close current activity
+                        finish()
                     } else {
-                        // Existing user, check if user data already exists in Firebase
                         val user = mAuth.currentUser
                         user?.let { currentUser ->
-                            // Check if user data exists using the push key
                             val userId = currentUser.uid
                             val userRef = FirebaseDatabase.getInstance().getReference("Riders Details").child(userId)
+
+                            // Set the login details
+                            val currentTime = SimpleDateFormat("dd-MM-yyyy hh:mm a", Locale.getDefault()).format(
+                                Date()
+                            )
+                            val currentUsername = currentUser.displayName ?: "unknown"
+
                             userRef.addListenerForSingleValueEvent(object : ValueEventListener {
                                 override fun onDataChange(dataSnapshot: DataSnapshot) {
                                     if (dataSnapshot.exists()) {
-                                        // User data already exists, navigate to MainActivity
+                                        // Rider details exist, update only updatedDate and updatedBy
+                                        userRef.child("loginUpdatedDate").setValue(currentTime)
+                                        userRef.child("loginUpdatedBy").setValue(currentUsername)
                                         startActivity(Intent(this@LoginActivity, MainActivity::class.java))
-                                        finish() // Close current activity
                                     } else {
-                                        // User data doesn't exist, navigate to DriverDetails
+                                        // First login, set createdDate and createdBy
+                                        userRef.child("loginCreatedDate").setValue(currentTime)
+                                        userRef.child("loginCreatedBy").setValue(currentUsername)
+                                        userRef.child("loginUpdatedDate").setValue(currentTime)
+                                        userRef.child("loginUpdatedBy").setValue(currentUsername)
                                         startActivity(Intent(this@LoginActivity, DriverDetails::class.java))
-                                        finish() // Close current activity
                                     }
+                                    finish()
                                 }
 
                                 override fun onCancelled(databaseError: DatabaseError) {
-                                    // Handle database error
+                                    // Handle potential errors here
                                 }
                             })
                         }
                     }
-                } else {
-                    // If sign in fails, display a message to the user.
-                    // Log.w(TAG, "signInWithCredential:failure", task.exception)
-                    // updateUI(null)
                 }
             }
     }
 
+
     public override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
-        // Result returned from launching the Intent from GoogleSignInApi.getSignInIntent(...);
         if (requestCode == RC_SIGN_IN) {
             val task = GoogleSignIn.getSignedInAccountFromIntent(data)
             try {
-                // Google Sign In was successful, authenticate with Firebase
                 val account = task.getResult(ApiException::class.java)!!
                 firebaseAuthWithGoogle(account.idToken!!)
             } catch (e: ApiException) {
-                // Google Sign In failed, update UI appropriately
-                // Log.w(TAG, "Google sign in failed", e)
-                // updateUI(null)
             }
         }
     }

@@ -6,22 +6,83 @@
     android:id="@+id/swipe"
     android:layout_height="match_parent">
 
+
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/white"
         tools:context="com.capztone.driver.MainActivity">
 
-        <TextView
+        <!-- AppBar with Toolbar -->
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="120dp"
+            android:background="@color/navy"
+            android:paddingBottom="20dp"
+            android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+
+            <!-- Icon Before Customer Orders Text -->
+            <ImageView
+                android:id="@+id/orderIcon"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:src="@drawable/orders"
+                android:tint="@color/white"
+                android:layout_marginTop="40dp"
+                android:layout_marginStart="20dp"
+                android:layout_gravity="center_vertical" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Customer Orders"
+                android:textSize="20sp"
+                android:layout_marginTop="40dp"
+                android:fontFamily="@font/nunito"
+                android:textColor="@color/white"
+                android:layout_marginStart="8dp" />
+            <!-- Layout for Location Icon and TextView -->
+
+        </androidx.appcompat.widget.Toolbar>
+
+        <LinearLayout
+            android:id="@+id/locationLayout"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Customer Orders"
-            android:textSize="23sp"
-            android:fontFamily="@font/inika_regular"
-            android:textColor="@color/black"
-            android:layout_marginTop="40dp"
-            android:layout_marginStart="95dp"/>
+            android:orientation="horizontal"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="80dp">
 
+            <ImageView
+                android:id="@+id/locationIcon"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/map"
+                android:tint="@color/white"
+                android:contentDescription="Location Icon"
+                /> <!-- Optional: set tint color -->
+
+            <TextView
+                android:id="@+id/locationTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="Change"
+                android:textColor="@color/white"
+                android:textSize="18sp"
+                android:fontFamily="@font/nunito"
+                android:maxLines="1"/>
+        </LinearLayout>
+
+        <ImageView
+            android:id="@+id/logout"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_marginStart="330dp"
+            android:layout_marginTop="43dp"
+            android:tint="@color/white"
+            android:src="@drawable/baseline_logout_24"/>
         <!-- Loading ProgressBar -->
         <ProgressBar
             android:id="@+id/progressBar"
@@ -37,17 +98,11 @@
             android:id="@+id/orderRecyclerView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginTop="80dp"
+            android:layout_marginTop="130dp"
             android:padding="2dp"
             android:scrollbars="vertical"
             tools:listitem="@layout/list_item_order"/>
 
-        <ImageView
-            android:id="@+id/logout"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_marginStart="320dp"
-            android:layout_marginTop="40dp"
-            android:src="@drawable/baseline_logout_24"/>
+
     </RelativeLayout>
 </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

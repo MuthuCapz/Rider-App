@@ -1,13 +1,10 @@
-
 package com.capztone.driver
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.pm.PackageManager
 import android.graphics.Color
 import android.location.Geocoder
 import android.location.Location
@@ -28,11 +25,10 @@ import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import com.capztone.driver.databinding.ActivityMainBinding
+import com.capztone.utils.FirebaseAuthUtil
 import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
@@ -41,6 +37,8 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
+import java.io.IOException
+import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
 
@@ -61,16 +59,8 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         // Initialize Firebase Database
-        mAuth = FirebaseAuth.getInstance()
-        window?.let { window ->
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
-                window.statusBarColor = Color.TRANSPARENT
-            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                window.statusBarColor = Color.TRANSPARENT
-            }
-        }
+          mAuth = FirebaseAuthUtil.auth
+
         if (!isInternetAvailable()) {
             showNoInternetDialog()
         }
@@ -118,12 +108,9 @@ class MainActivity : AppCompatActivity() {
             adapter = orderAdapter
         }
 
-        // Check if the location permission is granted, if not request it
-        if (checkLocationPermission()) {
-            getLastLocation()
-        } else {
-            requestLocationPermission()
-        }
+
+        getLastLocation()
+
         // Show the ProgressBar when some task starts
         showLoading()
 
@@ -140,6 +127,11 @@ class MainActivity : AppCompatActivity() {
                 ).show()
             }
         }
+    }
+    override fun onBackPressed() {
+        super.onBackPressed()
+        // This method closes the app when the back button is pressed in MainActivity
+        finishAffinity()
     }
 
     private fun setupSwipeToRefresh() {
@@ -163,7 +155,7 @@ class MainActivity : AppCompatActivity() {
             // Perform your actual data fetch task here (e.g., fetchOrders again)
             performTask()
 
-        }, 2000) // Simulate 2-second refresh
+        }, 1500) // Simulate 2-second refresh
     }
     private fun isInternetAvailable(): Boolean {
         val connectivityManager = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
@@ -231,75 +223,89 @@ class MainActivity : AppCompatActivity() {
     private fun performTask() {
         // Simulate a delay (e.g., network request)
         // You can replace this with your actual task logic
-         progressBar.postDelayed({
+        progressBar.postDelayed({
             // Hide the ProgressBar once the task is complete
             hideLoading()
         }, 2500) // Simulating a 3-second task
     }
 
     private fun showLoading() {
-         progressBar.visibility = View.VISIBLE
+        progressBar.visibility = View.VISIBLE
     }
 
     private fun hideLoading() {
         progressBar.visibility = View.GONE
     }
-    private fun checkLocationPermission(): Boolean {
-        return ActivityCompat.checkSelfPermission(
-            this,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
-    }
-
-    private fun requestLocationPermission() {
-        ActivityCompat.requestPermissions(
-            this,
-            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-            LOCATION_PERMISSION_REQUEST_CODE
-        )
-    }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
-            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                getLastLocation()
-            } else {
-                Toast.makeText(
-                    this,
-                    "Location permission denied",
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
-        }
-    }
 
     private fun getLastLocation() {
-        if (checkLocationPermission()) {
-            fusedLocationClient.lastLocation
-                .addOnSuccessListener { location: Location? ->
-                    location?.let {
-                        viewModel.saveDriverLocation()
-                        fetchDriverDistance { distance ->
-                            fetchOrders(it, distance)
+        val currentUserId = mAuth.currentUser?.uid
+        if (currentUserId != null) {
+            // Reference to the driver's location based on their ID in Firebase
+            val driverLocationRef = firebaseDatabase.getReference("Driver Location/$currentUserId")
+
+            driverLocationRef.addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    // Get latitude and longitude from the snapshot
+                    val latitude = snapshot.child("latitude").getValue(Double::class.java)
+                    val longitude = snapshot.child("longitude").getValue(Double::class.java)
+
+                    // Check if the values are not null
+                    if (latitude != null && longitude != null) {
+                        // Create a Location object with the retrieved coordinates
+                        val driverLocation = Location("").apply {
+                            this.latitude = latitude
+                            this.longitude = longitude
                         }
-                    } ?: run {
-                        Toast.makeText(
-                            this,
-                            "Failed to get location",
-                            Toast.LENGTH_SHORT
-                        ).show()
+
+                        // Fetch the locality from latitude and longitude
+                        val geocoder = Geocoder(this@MainActivity, Locale.getDefault())
+                        try {
+                            val addressList = geocoder.getFromLocation(latitude, longitude, 1)
+                            if (addressList != null && addressList.isNotEmpty()) {
+                                val address = addressList[0]
+                                val locality = address.locality ?: "Unknown Location"
+                                // Inside the onDataChange method, after updating the locationTextView
+                                findViewById<TextView>(R.id.locationTextView).apply {
+                                    text = locality
+                                    setOnClickListener {
+                                        // Navigate to DriverLocation Activity
+                                        val intent = Intent(this@MainActivity, DriverLocation::class.java)
+                                        startActivity(intent)
+                                    }
+                                }
+
+                                // Display locality in the TextView
+                                findViewById<TextView>(R.id.locationTextView).text = locality
+                            } else {
+                                Toast.makeText(this@MainActivity, "No address found for this location", Toast.LENGTH_SHORT).show()
+                            }
+                        } catch (e: IOException) {
+                            e.printStackTrace()
+                            Toast.makeText(this@MainActivity, "Geocoder service not available", Toast.LENGTH_SHORT).show()
+                        }
+
+                        // Fetch target distance and orders
+                        fetchDriverDistance { targetDistance ->
+                            fetchOrders(driverLocation, targetDistance)
+                        }
+                    } else {
+                        Toast.makeText(this@MainActivity, "Failed to retrieve driver location from Firebase", Toast.LENGTH_SHORT).show()
                     }
                 }
+
+                override fun onCancelled(error: DatabaseError) {
+                    Toast.makeText(this@MainActivity, "Error fetching driver location: ${error.message}", Toast.LENGTH_SHORT).show()
+                }
+            })
+        } else {
+            Toast.makeText(this, "User is not authenticated", Toast.LENGTH_SHORT).show()
         }
     }
 
+
+
     private fun fetchDriverDistance(onDistanceFetched: (Int) -> Unit) {
-        val driverDistanceRef = firebaseDatabase.getReference("Admins/spXRl1jY4yTlhDKZJzLicp8E9kc2/Driver Distance")
+        val driverDistanceRef = firebaseDatabase.getReference("Delivery Details/Driver Distance")
         driverDistanceRef.addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val distanceString = snapshot.getValue(String::class.java) // Get the value as a String
@@ -319,79 +325,94 @@ class MainActivity : AppCompatActivity() {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val orders = mutableListOf<Order>()
                 var hasValidOrders = false // Flag to check if there are any valid orders
-                var allOrdersOutsideDistance = true // Flag to check if all orders are outside distance
 
                 for (orderSnapshot in snapshot.children) {
                     val orderId = orderSnapshot.key // Get order ID
                     val order = orderSnapshot.getValue(Order::class.java)
                     val driverId = orderSnapshot.child("Driver Id").value as? String // Retrieve the DriverId from the database
+                    val confirmationStatus = orderSnapshot.child("Confirmation").value as? String // Retrieve the Confirmation status
 
-                    if (orderId != null && order != null) {
-                        val currentUserId = mAuth.currentUser?.uid // Get current driver's ID
-
-                        // Retrieve orders based on DriverId logic
-                        if (driverId == null || driverId == currentUserId) {
-                            val deliveryAddress = order.address
-                            if (deliveryAddress != null) {
-                                // Get latitude and longitude of delivery address
-                                val geocoder = Geocoder(applicationContext)
-                                val addressList = geocoder.getFromLocationName(deliveryAddress, 1)
-                                if (addressList != null && addressList.isNotEmpty()) {
-                                    val address = addressList[0]
-                                    val deliveryLocation = Location("").apply {
-                                        latitude = address.latitude
-                                        longitude = address.longitude
-                                    }
-
-                                    // Calculate distance between driver and delivery address
-                                    val distance = driverLocation.distanceTo(deliveryLocation) / 1000 // in km
-
-                                    // Check if the distance is within the target distance
-                                    if (distance <= targetDistance) {
-                                        orders.add(order) // Add order if within distance
-                                        hasValidOrders = true // Mark that there are valid orders
-                                        allOrdersOutsideDistance = false // At least one order is within distance
-                                    }
-                                }
-                            }
+                    // Check if the order is confirmed and the driver is matched
+                    if (orderId != null && order != null && confirmationStatus == "Order Confirmed" && isDriverMatched(driverId)) {
+                        val distance = calculateDistanceToDeliveryLocation(driverLocation, order.address)
+                        if (distance <= targetDistance) {
+                            orders.add(order) // Add order if within distance
+                            hasValidOrders = true // Mark that there are valid orders
                         }
                     }
                 }
 
-                // Determine navigation based on orders retrieved
-                when {
-                    orders.isEmpty() -> {
-                        // No valid orders found
-                        startActivity(Intent(this@MainActivity, OrderEmptyActivity::class.java))
+                // Sort orders: "Order Delivered" last, then by orderDate (reverse), then by selectedSlot
+                orders.sortWith(compareBy<Order> {
+                    // Prioritize order status
+                    when (it.status) {
+                        "Order Delivered" -> 1 // Place "Order Delivered" last
+                        "Order Picked" -> 0     // Place "Order Picked" first
+                        "Order Confirmed" -> 0   // Place "Order Confirmed" next
+                        else -> 2 // Any other status will be in between
                     }
-                    allOrdersOutsideDistance -> {
-                        // All orders are outside the specified distance
-                        startActivity(Intent(this@MainActivity, LocationNotAvailable::class.java))
-                    }
-                    hasValidOrders -> {
-                        // Valid orders within distance found
-                        orderAdapter.submitList(orders) // Update RecyclerView with valid orders
-                    }
-                }
+                }.thenByDescending { it.orderDate } // Reverse sort for orderDate
+                    .thenBy { extractStartTime(it.selectedSlot) }) // Sort by selectedSlot
+
+                handleOrderResults(orders, hasValidOrders)
             }
 
             override fun onCancelled(error: DatabaseError) {
-                // Handle error
                 Log.e("FirebaseError", "Error retrieving orders: ${error.message}")
             }
         })
     }
 
-    private fun distanceBetween(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
-        val R = 6371 // Radius of the Earth in km
-        val dLat = Math.toRadians(lat2 - lat1)
-        val dLon = Math.toRadians(lon2 - lon1)
-        val a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
-                Math.sin(dLon / 2) * Math.sin(dLon / 2)
-        val c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-        return R * c // Distance in km
+    private fun extractStartTime(slot: String): String {
+        // Assuming the format is "HH:mm a - HH:mm a"
+        return slot.split(" - ").first().trim() // Extracting the start time
     }
+
+    private fun isDriverMatched(driverId: String?): Boolean {
+        val currentUserId = mAuth.currentUser?.uid
+        return driverId == null || driverId == currentUserId
+    }
+    private fun calculateDistanceToDeliveryLocation(driverLocation: Location, deliveryAddress: String?): Float {
+        if (deliveryAddress.isNullOrEmpty()) return Float.MAX_VALUE
+
+        return try {
+            val geocoder = Geocoder(applicationContext)
+            val addressList = geocoder.getFromLocationName(deliveryAddress, 1)
+            if (addressList?.isNotEmpty() == true) {
+                val address = addressList?.get(0)
+                val deliveryLocation = Location("").apply {
+                    if (address != null) {
+                        latitude = address.latitude
+                    }
+                    if (address != null) {
+                        longitude = address.longitude
+                    }
+                }
+                driverLocation.distanceTo(deliveryLocation) / 1000 // Distance in kilometers
+            } else {
+                Float.MAX_VALUE
+            }
+        } catch (e: IOException) {
+            Log.e("GeocoderError", "Geocoding failed: ${e.message}")
+            Float.MAX_VALUE
+        }
+    }
+
+
+    private fun handleOrderResults(orders: List<Order>, hasValidOrders: Boolean) {
+        when {
+            orders.isEmpty() -> {
+                startActivity(Intent(this@MainActivity, OrderEmptyActivity::class.java))
+            }
+            hasValidOrders -> {
+                orderAdapter.submitList(orders) // Update RecyclerView with valid orders
+            }
+            else -> {
+                startActivity(Intent(this@MainActivity, LocationNotAvailable::class.java))
+            }
+        }
+    }
+
 
     private fun showLogoutConfirmationDialog() {
         val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_logout_confirmation, null)

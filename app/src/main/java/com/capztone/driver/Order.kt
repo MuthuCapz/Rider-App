@@ -13,7 +13,8 @@ data class Order(
     var orderDate: String,
     var isDelivered: Boolean = false,
     val latitude: Double? = null,
-    val longitude: Double? = null
+    val longitude: Double? = null,
+    val status: String
 
     // Add other order details here
 ) {
@@ -30,6 +31,7 @@ data class Order(
         "",
         false,
         null,
-        null
+        null,
+        ""
     )
 }

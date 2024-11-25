@@ -59,12 +59,14 @@ class OrderAdapter(private val context: Context, private val username: String?) 
     ) : RecyclerView.ViewHolder(inflater.inflate(R.layout.list_item_order, parent, false)) {
 
         private var orderIdTextView: TextView = itemView.findViewById(R.id.itemPushKey)
-        private var userUidTextView: TextView = itemView.findViewById(R.id.userUid)
 
         private var addressTextView: TextView = itemView.findViewById(R.id.address)
         private var selectedSlotTextView: TextView = itemView.findViewById(R.id.slot)
         private var shopnameTextView: TextView = itemView.findViewById(R.id.shopname)
         private var foodnameTextView: TextView = itemView.findViewById(R.id.foodname)
+        private var routemap: TextView = itemView.findViewById(R.id.routemap)
+        private var estimatedtime: TextView = itemView.findViewById(R.id.estimatedtime)
+
         private var foodquantityTextView: TextView = itemView.findViewById(R.id.foodquantity)
         private var orderdateTextView: TextView = itemView.findViewById(R.id.date)
         private var cancellationMessageTextView: TextView = itemView.findViewById(R.id.cancel)
@@ -78,7 +80,6 @@ class OrderAdapter(private val context: Context, private val username: String?) 
         private var estimatedTimeSet = false
         fun bind(order: Order) {
             orderIdTextView.text = "${order.itemPushKey}"
-            userUidTextView.text = "${order.userUid}"
 
             addressTextView.text = "${order.address}"
             selectedSlotTextView.text = "${order.selectedSlot}"
@@ -90,7 +91,7 @@ class OrderAdapter(private val context: Context, private val username: String?) 
 
             orderdateTextView.text = "${order.orderDate}"
 
-            val statusReference = firebaseDatabase.child("status").child(order.itemPushKey)
+            val statusReference = firebaseDatabase.child("OrderDetails").child(order.itemPushKey).child("Status")
             statusReference.addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(dataSnapshot: DataSnapshot) {
                     val status = dataSnapshot.child("message").value?.toString() ?: ""
@@ -102,6 +103,9 @@ class OrderAdapter(private val context: Context, private val username: String?) 
                             btnConfirmed.isEnabled = false
                             btnViewDetails.isEnabled = false
                             btnDelivered.isEnabled = false
+                            routemap.isClickable = false
+                            estimatedtime.isClickable=false
+                            drop.isClickable=false
                             btnViewDetails.setBackgroundColor(
                                 ContextCompat.getColor(
                                     context, R.color.navy
@@ -179,7 +183,9 @@ class OrderAdapter(private val context: Context, private val username: String?) 
 
 
             drop.setOnClickListener { showPopupMenu(order.itemPushKey) }
+            estimatedtime.setOnClickListener { showPopupMenu(order.itemPushKey) }
 
+            loadEstimatedTimeFromPreferences(order.itemPushKey)
             val slotTimeRange = order.selectedSlot
             val currentTime = getCurrentTime()
 
@@ -204,15 +210,13 @@ class OrderAdapter(private val context: Context, private val username: String?) 
                 }
             } else {
                 // Existing functionality when the current time is within the slot
+                val currentTime = getCurrentDateTime()
                 btnViewDetails.setOnClickListener {
-                    val fullAddress = order.address // This contains name, address, and phone number
-                    val validAddress = extractValidAddress(fullAddress)
                     val currentStatus = deliveryMessageTextView.text.toString()
                     if (currentStatus == "Order confirmed") {
                         // Proceed with confirmation logic
-                        saveMessageToFirebase(order.itemPushKey, "Order picked", order.shopNames)
-                        launchGoogleMapsDirections(validAddress)
-                        saveMessageToFirebase(order.itemPushKey, "Order picked", order.shopNames)
+                        saveMessageToFirebase(order.itemPushKey, "Order picked", order.shopNames,currentTime)
+
 
                         btnConfirmed.isEnabled = false
                         btnViewDetails.isEnabled = false
@@ -227,25 +231,29 @@ class OrderAdapter(private val context: Context, private val username: String?) 
                     }
 
                 }
-                btnConfirmed.setOnClickListener {
-
-
-                }
 
 
                 btnConfirmed.setOnClickListener {
-                    if (!estimatedTimeSet) {
+
+                    // Assuming estimatedTimeTextView is the TextView showing the estimated time
+                    val estimatedTime = estimatedtime.text.toString().trim()
+
+                    // Check if estimated time is empty and show a toast, return early
+                    if (estimatedTime.isEmpty()) {
                         Toast.makeText(
-                            context, "Please set estimated time first", Toast.LENGTH_SHORT
+                            context, "Please set the estimated time first", Toast.LENGTH_SHORT
                         ).show()
-                        return@setOnClickListener
+                        return@setOnClickListener // This ensures the rest of the code does not execute if estimated time is empty
                     }
+
+                    // Proceed with the order confirmation logic
                     val orderId = order.itemPushKey // Get the current item's order ID
                     val currentUserId = FirebaseAuth.getInstance().currentUser?.uid // G
 
+                    // Check if user is authenticated
                     if (currentUserId == null) {
                         Toast.makeText(context, "User not authenticated", Toast.LENGTH_SHORT).show()
-                        return@setOnClickListener
+                        return@setOnClickListener // Return early if user is not authenticated
                     }
 
                     // Reference to "Order Details" in Firebase
@@ -264,7 +272,7 @@ class OrderAdapter(private val context: Context, private val username: String?) 
                                     // Order ID matches, store the user ID under this order ID in Firebase
                                     orderDetailsRef.child(orderId).child("Driver Id").setValue(currentUserId)
                                         .addOnSuccessListener {
-                                            Toast.makeText(context, "Order confirmed and user ID saved", Toast.LENGTH_SHORT).show()
+
                                         }
                                         .addOnFailureListener {
                                             Toast.makeText(context, "Failed to save user ID", Toast.LENGTH_SHORT).show()
@@ -283,18 +291,30 @@ class OrderAdapter(private val context: Context, private val username: String?) 
                             Log.e("Firebase", "Error fetching order details: ${databaseError.message}")
                         }
                     })
-                    saveMessageToFirebase(order.itemPushKey, "Order confirmed", order.shopNames)
+
+                    val currentTime = getCurrentDateTime()
+
+                    // Save the confirmation message to Firebase
+                    saveMessageToFirebase(order.itemPushKey, "Order confirmed", order.shopNames, currentTime)
+
+                    // Disable the confirm button and change its background color
                     btnConfirmed.isEnabled = false
                     btnConfirmed.setBackgroundColor(ContextCompat.getColor(context, R.color.lnavy))
                 }
 
 
-                btnDelivered.setOnClickListener {
+                routemap.setOnClickListener {
+                    val fullAddress = order.address // This contains name, address, and phone number
+                    val validAddress = extractValidAddress(fullAddress)
+                    launchGoogleMapsDirections(validAddress)
+                }
 
+                btnDelivered.setOnClickListener {
+                    val currentTime = getCurrentDateTime()
                     val currentStatus = deliveryMessageTextView.text.toString()
                     if (currentStatus == "Order picked") {
                         // Proceed with delivery logic
-                        saveMessageToFirebase(order.itemPushKey, "Order delivered", order.shopNames)
+                        saveMessageToFirebase(order.itemPushKey, "Order delivered", order.shopNames,currentTime)
                         btnConfirmed.isEnabled = false
                         btnViewDetails.isEnabled = false
                         btnDelivered.isEnabled = false
@@ -323,6 +343,12 @@ class OrderAdapter(private val context: Context, private val username: String?) 
             }
 
         }
+        // Function to get the current date and time in the desired format
+        fun getCurrentDateTime(): String {
+            val dateFormat = SimpleDateFormat("dd MMM yyyy, hh:mm a (EEEE)", Locale.getDefault())
+            return dateFormat.format(Date())
+        }
+
 
         fun extractValidAddress(fullAddress: String): String {
             // Split the address by spaces
@@ -375,32 +401,24 @@ class OrderAdapter(private val context: Context, private val username: String?) 
                 false
             }
         }
-
-
         private fun showPopupMenu(orderId: String) {
             val popupMenu = PopupMenu(context, drop)
             popupMenu.menuInflater.inflate(R.menu.payoutaddress, popupMenu.menu)
+
             popupMenu.setOnMenuItemClickListener { menuItem: MenuItem ->
-                when (menuItem.itemId) {
-                    R.id.menu_15mins -> {
-                        saveMenuItemToFirebase(orderId, "15 mins")
-                        estimatedTimeSet = true // Mark estimated time as set
-                    }
+                val selectedTime = when (menuItem.itemId) {
+                    R.id.menu_15mins -> "15 mins"
+                    R.id.menu_30mins -> "30 mins"
+                    R.id.menu_45mins -> "45 mins"
+                    R.id.menu_1hr -> "1 hr"
+                    else -> null
+                }
 
-                    R.id.menu_30mins -> {
-                        saveMenuItemToFirebase(orderId, "30 mins")
-                        estimatedTimeSet = true // Mark estimated time as set
-                    }
-
-                    R.id.menu_45mins -> {
-                        saveMenuItemToFirebase(orderId, "45 mins")
-                        estimatedTimeSet = true // Mark estimated time as set
-                    }
-
-                    R.id.menu_1hr -> {
-                        saveMenuItemToFirebase(orderId, "1 hr")
-                        estimatedTimeSet = true // Mark estimated time as set
-                    }
+                selectedTime?.let {
+                    saveMenuItemToFirebase(orderId, it) // Ensure this method is implemented
+                    estimatedtime.text = it // Update with selected time
+                    estimatedTimeSet = true
+                    saveEstimatedTimeToPreferences(orderId, it) // Save to SharedPreferences with orderId
                 }
                 true
             }
@@ -408,10 +426,22 @@ class OrderAdapter(private val context: Context, private val username: String?) 
             popupMenu.show()
         }
 
+        private fun saveEstimatedTimeToPreferences(orderId: String, selectedTime: String) {
+            val sharedPreferences = context?.getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
+            sharedPreferences?.edit()?.putString("estimated_time_$orderId", selectedTime)?.apply() // Use orderId in key
+        }
 
+        private fun loadEstimatedTimeFromPreferences(orderId: String) {
+            val sharedPreferences = context?.getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
+            val savedTime = sharedPreferences?.getString("estimated_time_$orderId", null) // Use orderId in key
+
+            savedTime?.let {
+                estimatedtime.text = it // Set the saved time to the TextView
+            }
+        }
         private fun saveMenuItemToFirebase(orderId: String, time: String) {
             val firebaseDatabase = FirebaseDatabase.getInstance().reference
-            val messageReference = firebaseDatabase.child("Estimated Time").child(orderId)
+            val messageReference = firebaseDatabase.child("OrderDetails").child(orderId).child("Estimated Time")
 
             val messageData = HashMap<String, Any>()
             messageData["estimated_time"] = time
@@ -434,39 +464,52 @@ class OrderAdapter(private val context: Context, private val username: String?) 
         }
 
         private fun saveMessageToFirebase(
-            orderid: String, message: String, shopName: List<String>
+            orderid: String, message: String, shopName: List<String>, currentTime: String
         ) {
             val firebaseDatabase = FirebaseDatabase.getInstance().reference
-            val messageReference = firebaseDatabase.child("status").child(orderid)
 
-            val messageData = HashMap<String, Any>()
-            messageData["message"] = message
-            messageData["shop_name"] = shopName // Store the shop name
-            username?.let { messageData["username"] = it }
+            // Reference to the current order details
+            val orderDetailsReference = firebaseDatabase.child("OrderDetails").child(orderid)
 
-            if (message == "Order delivered") {
-                messageData["timestamp"] = getTimeStamp()
+            // Retrieve existing data from Firebase
+            orderDetailsReference.child("Status").get().addOnSuccessListener { snapshot ->
+                val existingData = snapshot.value as? HashMap<String, Any> ?: HashMap()
 
-                // Iterate through shopName list and save delivered message to each shop's delivery path
-                shopName.forEach { shop ->
-                    val shopDeliveryReference =
-                        firebaseDatabase.child("${shop} delivery").child(orderid)
-                    shopDeliveryReference.setValue(messageData).addOnSuccessListener {
-                        Log.d(
-                            "Firebase", "Delivered message saved to ${shop} delivery: $message"
-                        )
-                    }.addOnFailureListener { e ->
-                        Log.e(
-                            "Firebase", "Error saving delivered message to ${shop} delivery: $e"
-                        )
+                // Prepare messageData with existing fields
+                val messageData = HashMap<String, Any>().apply {
+                    putAll(existingData) // Retain existing fields
+                    put("message", message)
+                    put("shop_name", shopName)
+                    username?.let { put("username", it) }
+                }
+
+                // Update only the relevant date field based on the new message
+                when (message) {
+                    "Order confirmed" -> messageData["confirmDate"] = currentTime
+                    "Order picked" -> messageData["pickedDate"] = currentTime
+                    "Order delivered" -> messageData["deliveredDate"] = currentTime
+                }
+
+                // Save the updated data back to Firebase
+                orderDetailsReference.child("Status").setValue(messageData).addOnSuccessListener {
+                    Log.d("Firebase", "Message saved successfully: $message")
+                }.addOnFailureListener { e ->
+                    Log.e("Firebase", "Error saving message: $e")
+                }
+
+                // If the message is "Order delivered", save to each shop's delivery path
+                if (message == "Order delivered") {
+                    shopName.forEach { shop ->
+                        val shopDeliveryReference = firebaseDatabase.child("${shop} delivery").child(orderid)
+                        shopDeliveryReference.setValue(messageData).addOnSuccessListener {
+                            Log.d("Firebase", "Delivered message saved to ${shop} delivery")
+                        }.addOnFailureListener { e ->
+                            Log.e("Firebase", "Error saving to ${shop} delivery: $e")
+                        }
                     }
                 }
-            }
-
-            messageReference.setValue(messageData).addOnSuccessListener {
-                Log.d("Firebase", "Message saved to Firebase: $message")
             }.addOnFailureListener { e ->
-                Log.e("Firebase", "Error saving message to Firebase: $e")
+                Log.e("Firebase", "Error fetching order details: $e")
             }
         }
 

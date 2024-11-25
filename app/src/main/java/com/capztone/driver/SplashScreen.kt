@@ -11,13 +11,13 @@ import android.view.animation.AnimationUtils
 import android.view.animation.TranslateAnimation
 import androidx.appcompat.app.AppCompatActivity
 import com.capztone.driver.databinding.ActivitySplashScreenBinding
+import com.capztone.utils.FirebaseAuthUtil
 import com.google.android.gms.auth.api.signin.GoogleSignInClient
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
-
 
 class SplashScreen : AppCompatActivity() {
     private lateinit var binding: ActivitySplashScreenBinding
@@ -30,69 +30,75 @@ class SplashScreen : AppCompatActivity() {
         binding = ActivitySplashScreenBinding.inflate(layoutInflater)
         setContentView(binding.root)
         database = FirebaseDatabase.getInstance()
-        mAuth = FirebaseAuth.getInstance()
+        mAuth = FirebaseAuthUtil.auth
         binding.imageView4.setAnimation("login.json")
         binding.imageView4.playAnimation()
 
-        window?.let { window ->
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_LAYOUT_STABLE or View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
-                window.statusBarColor = Color.TRANSPARENT
-            } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                window.statusBarColor = Color.TRANSPARENT
-            }
-        }
-        // Translate animation to move image from top to center
         val translateAnimation = TranslateAnimation(0f, 500f, 500f, 0f)
-        translateAnimation.duration = 1000 // Set duration as needed
+        translateAnimation.duration = 1000
 
-        // Rotate and zoom animations
         val rotateAnimation = AnimationUtils.loadAnimation(this, R.anim.rotate_animation)
         val zoomInAnimation = AnimationUtils.loadAnimation(this, R.anim.zoom_in_animation)
 
-        // Animate simultaneously
         val animationSet = AnimationSet(true)
         animationSet.addAnimation(translateAnimation)
         animationSet.addAnimation(rotateAnimation)
 
         binding.iconTxtt1.startAnimation(zoomInAnimation)
 
-
-
         Handler().postDelayed({
             checkUserInRidersDetails()
-        }, 3300) // Adjust delay as needed
+        }, 3300)
     }
+
     private fun checkUserInRidersDetails() {
         val currentUser = mAuth.currentUser
         if (currentUser != null) {
             val userId = currentUser.uid
             val ridersDetailsRef = database.getReference("Riders Details").child(userId)
 
-            // Check if the userId exists in "Riders Details"
             ridersDetailsRef.addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     if (snapshot.exists()) {
-                        // User exists in "Riders Details", navigate to MainActivity
-                        startActivity(Intent(this@SplashScreen, MainActivity::class.java))
+                        // User exists in "Riders Details", now check "Driver Location"
+                        checkUserInDriverLocation(userId)
                     } else {
-                        // User does not exist, navigate to LoginActivity
+                        // User does not exist in "Riders Details", navigate to LoginActivity
                         startActivity(Intent(this@SplashScreen, LoginActivity::class.java))
+                        finish()
                     }
-                    finish()
                 }
 
                 override fun onCancelled(error: DatabaseError) {
-                    // Handle database error, possibly navigate to login or show error
                     startActivity(Intent(this@SplashScreen, LoginActivity::class.java))
                     finish()
                 }
             })
         } else {
-            // If no user is logged in, navigate to LoginActivity
             startActivity(Intent(this, LoginActivity::class.java))
             finish()
         }
+    }
+
+    private fun checkUserInDriverLocation(userId: String) {
+        val driverLocationRef = database.getReference("Driver Location").child(userId)
+
+        driverLocationRef.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                if (snapshot.exists()) {
+                    // User exists in "Driver Location", navigate to MainActivity
+                    startActivity(Intent(this@SplashScreen, MainActivity::class.java))
+                } else {
+                    // User does not exist in "Driver Location", navigate to DriverLocationActivity
+                    startActivity(Intent(this@SplashScreen, DriverLocation::class.java))
+                }
+                finish()
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                startActivity(Intent(this@SplashScreen, LoginActivity::class.java))
+                finish()
+            }
+        })
     }
 }
